@@ -97,3 +97,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup and guidelines.
 ## License
 
 MIT
+
+---
+
+## Community
+
+Built by [@momolabs2026](https://github.com/momolabs2026). Star the repo if Momo approves. 🐱

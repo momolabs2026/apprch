@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.yourname.FreshScoop",
+        "paths": ["/trigger/*"]
+      }
+    ]
+  }
+}

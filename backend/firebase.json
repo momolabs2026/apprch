@@ -1,0 +1,25 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs20"
+  },
+  "hosting": {
+    "public": "public",
+    "cleanUrls": false,
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "/.well-known/apple-app-site-association",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      }
+    ]
+  }
+}

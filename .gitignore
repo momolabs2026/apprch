@@ -1,0 +1,37 @@
+# Firebase secrets — never commit these
+**/GoogleService-Info.plist
+**/google-services.json
+**/.env
+**/.env.*
+**/serviceAccountKey.json
+
+# Firebase build output
+backend/functions/lib/
+backend/functions/node_modules/
+backend/.firebase/
+
+# iOS
+ios/**/*.xcodeproj/xcuserdata/
+ios/**/DerivedData/
+ios/**/*.ipa
+ios/**/*.dSYM.zip
+ios/**/*.dSYM
+ios/**/Pods/
+ios/**/.build/
+
+# Android
+android/.gradle/
+android/local.properties
+android/**/build/
+android/**/*.apk
+android/**/*.aab
+android/**/*.keystore
+android/**/*.jks
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode
+ios/**/*.xcworkspace/xcuserdata/
+ios/**/*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist

@@ -1,0 +1,17 @@
+# Apprch git workflow
+
+This repo is open source. Erika (`@momolabs2026`) is the only person who merges.
+
+## Branch / PR conventions
+
+- Branch off `origin/staging`, never off `main`.
+- Never commit directly to `staging` or `main` — always a feature branch + PR.
+- Open the PR with `gh pr create --base staging --head feature/<name>` and stop.
+- **Never run `gh pr merge`.** Erika always merges in the GitHub UI herself; that click is the approval gate.
+- Promote to production with a separate PR (`gh pr create --base main --head staging`) only when she asks — also never auto-merged.
+- After opening a PR, report the URL and ask her to review and merge.
+
+## Open-source reviews
+
+- `.github/CODEOWNERS` requires `@momolabs2026` on every change.
+- Invited collaborators must open a pull request. They cannot push to `staging` or `main`, and they cannot merge without her review.

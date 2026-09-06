@@ -4,9 +4,14 @@ Thanks for your interest in contributing. Apprch is a household tap-to-notify ap
 
 ## How to contribute
 
-1. **Fork** the repo and create a branch from `main`
-2. Make your changes
-3. Open a **Pull Request** with a clear description of what you changed and why
+1. **Fork** the repo (or create a branch from `staging` if you have write access)
+2. Make your changes on a feature branch — never commit to `main` or `staging`
+3. Open a **Pull Request into `staging`** with a clear description of what you changed and why
+4. Wait for `@momolabs2026` to review and merge. You cannot merge it yourself.
+
+Every PR requires a review from `@momolabs2026` (`CODEOWNERS`). Direct pushes to `main` and `staging` are blocked.
+
+If you are inviting a collaborator: give them **Read** access so they fork and open a PR. Only `@momolabs2026` should merge.
 
 ## Project structure
 

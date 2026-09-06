@@ -14,7 +14,7 @@ final class AuthViewModel: ObservableObject {
         case loading
         case unauthenticated
         case needsGroup
-        case ready(groupId: String)
+        case ready(groupId: String, solo: Bool)
     }
 
     @Published var state: AppState = .loading
@@ -90,7 +90,8 @@ final class AuthViewModel: ObservableObject {
             .addSnapshotListener { [weak self] snapshot, _ in
                 Task { @MainActor in
                     let groupId = snapshot?.data()?["groupId"] as? String
-                    self?.state = groupId.map { .ready(groupId: $0) } ?? .needsGroup
+                    let solo = snapshot?.data()?["solo"] as? Bool ?? false
+                    self?.state = groupId.map { .ready(groupId: $0, solo: solo) } ?? .needsGroup
                 }
             }
     }

@@ -1,6 +1,6 @@
 # Apprch
 
-A household app for tap-triggered events. Create a Trigger, write its link to an NFC tag, and everyone in the household gets a push when it’s tapped.
+A tap-to-log app for yourself or a group. Create a Trigger, write its link to an NFC tag, and log it when it’s tapped — as a private reminder, or as a push to everyone you invite.
 
 ---
 
@@ -10,7 +10,7 @@ In a shared household, small tasks turn into “did anyone do it yet?” convers
 
 ## The solution
 
-Anyone in the household can create a Trigger — a named event with its own icon, notification message, and history. Write the generated link to an NFC tag. Tap the tag → confirm → every other member gets a native push with that Trigger’s message.
+Create a Trigger — a named event with its own icon, note, and history. Use it solo as a visual reminder, or invite a group so everyone else gets a native push when it’s tapped.
 
 ---
 
@@ -45,8 +45,8 @@ SwiftUI: sign in → create or join a household → home list of Triggers. Unive
 ### Data model
 
 ```
-groups/{groupId}        name, inviteCode, memberUids[]
-users/{uid}             displayName, groupId, fcmTokens[]
+groups/{groupId}        name, solo, inviteCode, memberUids[]
+users/{uid}             displayName, groupId, solo, fcmTokens[]
 triggers/{triggerId}    groupId, name, icon, notificationMessage, visualizationType, createdByUid, createdAt, lastTriggeredAt, lastTriggeredByUid, eventCount
 events/{eventId}        groupId, triggerId, triggeredByUid, timestamp
 ```

@@ -5,6 +5,7 @@ import UserNotifications
 
 struct HomeView: View {
     let groupId: String
+    let solo: Bool
 
     @EnvironmentObject var authVM: AuthViewModel
     @State private var triggers: [Trigger] = []
@@ -21,7 +22,9 @@ struct HomeView: View {
                     ContentUnavailableView {
                         Label("No triggers yet", systemImage: "dot.radiowaves.left.and.right")
                     } description: {
-                        Text("Create a Trigger, write its link to an NFC tag, and everyone in your group gets notified when it’s tapped.")
+                        Text(solo
+                            ? "Create a Trigger and tap its tag to log it as a reminder for yourself."
+                            : "Create a Trigger, write its link to an NFC tag, and everyone in your group gets notified when it’s tapped.")
                     } actions: {
                         Button("Create a Trigger") { showingCreate = true }
                             .buttonStyle(.borderedProminent)
@@ -54,7 +57,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showingCreate) {
-                CreateTriggerView(groupId: groupId)
+                CreateTriggerView(groupId: groupId, solo: solo)
             }
             .alert("Notifications", isPresented: $showingNotifExplainer) {
                 Button("Continue") { requestNotificationPermission() }
@@ -62,7 +65,9 @@ struct HomeView: View {
                 Text("Apprch needs permission to notify your group.")
             }
             .onAppear {
-                askForNotificationsIfNeeded()
+                if !solo {
+                    askForNotificationsIfNeeded()
+                }
                 startListening()
             }
             .onDisappear { listener?.remove() }

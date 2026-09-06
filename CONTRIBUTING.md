@@ -1,53 +1,57 @@
-# Contributing to Fresh Scoop
+# Contributing to Apprch
 
-Thanks for your interest in contributing! Fresh Scoop is a family app built with Firebase, SwiftUI, and Jetpack Compose. All contributions are welcome — bug fixes, new features, and improvements.
+Thanks for your interest in contributing. Apprch is a household tap-to-notify app built with Firebase, SwiftUI, and Jetpack Compose.
 
 ## How to contribute
 
 1. **Fork** the repo and create a branch from `main`
 2. Make your changes
 3. Open a **Pull Request** with a clear description of what you changed and why
-4. I'll review it and merge if it looks good
-
-## What to work on
-
-Check the [Issues](https://github.com/momolabs2026/fresh-scoop/issues) tab for open tasks. Feel free to open a new issue to propose a feature or report a bug before writing code.
 
 ## Project structure
 
 ```
-fresh-scoop/
+apprch/
 ├── backend/       # Firebase Cloud Functions + Firestore rules
-├── ios/           # SwiftUI app
+├── ios/           # SwiftUI app (`Apprch.xcodeproj`)
 └── android/       # Jetpack Compose app
 ```
 
 ## Setup
 
 ### Backend
+
 ```bash
 cd backend/functions
 npm install
 npm run build
 ```
 
+Live hosting: `https://apprch.web.app`
+
+Deploy after changing functions, rules, or hosting:
+
+```bash
+cd backend
+firebase deploy --only functions,firestore,hosting
+```
+
 ### iOS
-- Open the Xcode project in `ios/`
-- Add your own `GoogleService-Info.plist` (download from Firebase console)
-- Add Firebase SDK via Swift Package Manager
+
+- Open `ios/Apprch.xcodeproj`
+- Bundle identifier: `com.momo-labs.Apprch`
+- Add `GoogleService-Info.plist` from the Apprch Firebase project
 
 ### Android
-- Open `android/` in Android Studio
-- Add your own `google-services.json` (download from Firebase console)
 
-> **Note:** `GoogleService-Info.plist` and `google-services.json` are gitignored — you need your own Firebase project to run the app locally.
+- Package name: `com.apprch.app`
+- Put `google-services.json` in `android/app/`
+- Open `android/` in Android Studio and run on a Pixel emulator
+
+> **Note:** `GoogleService-Info.plist` and `google-services.json` are gitignored.
 
 ## Code style
 
 - iOS: standard Swift conventions, SwiftUI
 - Android: standard Kotlin conventions, Jetpack Compose
 - Backend: TypeScript strict mode
-
-## Questions?
-
-Open an issue or reach out on Instagram.

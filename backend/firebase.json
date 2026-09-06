@@ -1,15 +1,27 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   },
   "functions": {
     "source": "functions",
     "runtime": "nodejs20"
   },
   "hosting": {
+    "site": "apprch",
     "public": "public",
     "cleanUrls": false,
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/t/**",
+        "destination": "/index.html"
+      }
+    ],
     "headers": [
       {
         "source": "/.well-known/apple-app-site-association",
@@ -19,7 +31,21 @@
             "value": "application/json"
           }
         ]
+      },
+      {
+        "source": "/.well-known/assetlinks.json",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
       }
     ]
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true
+    }
   }
 }

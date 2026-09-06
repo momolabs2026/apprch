@@ -1,96 +1,77 @@
-# Fresh Scoop 🐱
+# Apprch
 
-A family app that sends everyone a push notification when Momo's litter box gets cleaned. Tap an NFC tag → the app opens → confirm → your whole family's phones buzz.
-
-Built to grow: the litter box feature is just the first event type. The same architecture supports any family notification (chores, reminders, shared calendar events) without re-architecting anything.
+A household app for tap-triggered events. Create a Trigger, write its link to an NFC tag, and everyone in the household gets a push when it’s tapped.
 
 ---
 
 ## The problem
 
-In a shared household, small tasks like cleaning a litter box turn into "did anyone do it yet?" conversations throughout the day. There's no lightweight, frictionless way to log that something happened and instantly let everyone else know — without opening a chat app, typing a message, and hoping people see it.
+In a shared household, small tasks turn into “did anyone do it yet?” conversations. There’s no lightweight way to log that something happened and instantly let everyone else know.
 
 ## The solution
 
-A physical NFC tag lives next to Momo's litter box. Tap it with your phone → a confirmation screen appears → tap Send → every family member with the app installed gets a native push notification in seconds. No typing, no group chats, no wondering.
+Anyone in the household can create a Trigger — a named event with its own icon, notification message, and history. Write the generated link to an NFC tag. Tap the tag → confirm → every other member gets a native push with that Trigger’s message.
 
 ---
 
 ## Architecture
 
 ```
-fresh-scoop/
+apprch/
 ├── backend/       # Firebase: Cloud Functions, Firestore, Hosting
 ├── ios/           # Native iOS app — Swift + SwiftUI
 └── android/       # Native Android app — Kotlin + Jetpack Compose
 ```
 
 ### Backend (Firebase)
+
 - **Authentication** — email/password sign-in
-- **Firestore** — families, users, and events collections
-- **Cloud Functions** — `createFamily`, `joinFamily`, `logEvent` (fans out FCM push notifications)
-- **Hosting** — serves Universal Link (`apple-app-site-association`) and App Link (`assetlinks.json`) verification files
+- **Firestore** — households (`families`), users, `triggers`, and `events`
+- **Cloud Functions** — `createFamily`, `joinFamily`, `logEvent` (looks up the Trigger, writes an event, fans out FCM)
+- **Hosting** — Universal Link / App Link verification at `https://apprch.web.app/t/{triggerId}`
 
 ### iOS
-SwiftUI app with a state machine: sign in → create or join a family → home screen showing the event feed. Universal Links handle the NFC tap and open a confirmation sheet.
 
-### Android
-Jetpack Compose app, feature-identical to iOS. App Links handle the NFC tap and show a confirmation dialog.
+SwiftUI: sign in → create or join a household → home list of Triggers. Universal Links use `/t/{triggerId}` and open a confirm sheet.
 
 ### NFC flow
-1. NFC tag is written with `https://fresh-scoop.web.app/trigger/litter-cleaned`
-2. Tapping the tag on any phone opens the app directly (no browser)
-3. User confirms → app calls `logEvent` Cloud Function
-4. Cloud Function writes to Firestore and sends FCM push to all family members
+
+1. Create a Trigger in the app and copy `https://apprch.web.app/t/{triggerId}`
+2. Write that URL to a physical tag (NFC Tools or similar)
+3. Tapping the tag opens Apprch to a confirm screen
+4. Confirm calls `logEvent` with `triggerId`
+5. The Cloud Function writes `events/{eventId}` and notifies the household with the Trigger’s custom message
 
 ### Data model
+
 ```
 families/{familyId}     name, inviteCode, memberUids[]
 users/{uid}             displayName, familyId, fcmTokens[]
-events/{eventId}        familyId, type, triggeredByUid, timestamp
+triggers/{triggerId}    familyId, name, icon, notificationMessage, visualizationType, createdByUid, createdAt, lastTriggeredAt, lastTriggeredByUid, eventCount
+events/{eventId}        familyId, triggerId, triggeredByUid, timestamp
 ```
+
+Visualization types in v1: **Log** and **Counter**.
 
 ---
 
 ## Roadmap
 
-- [x] Phase 1 — Firebase backend (Auth, Firestore, Functions, Hosting)
-- [x] Phase 2 — iOS MVP
-- [x] Phase 3 — Android MVP
+- [x] Phase 1 — Firebase backend
+- [x] Phase 2 — iOS Triggers
+- [ ] Phase 3 — Android trigger redesign
 - [ ] Phase 4 — NFC tag setup + end-to-end test
-- [ ] Phase 5 — Shared family calendar + home screen widget (WidgetKit / Glance)
-- [ ] Phase 6 — Multiple event types (chores, reminders, custom tags)
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Backend | Firebase (Auth, Firestore, Cloud Functions, FCM, Hosting) |
-| iOS | Swift, SwiftUI, Firebase iOS SDK |
-| Android | Kotlin, Jetpack Compose, Firebase Android SDK |
-| NFC | URL-based (no on-device scanning code needed) |
+- [ ] Phase 5 — Calendar / streak / checklist visualizations + widgets
 
 ---
 
 ## Running locally
 
-You'll need your own Firebase project to run this app (the `GoogleService-Info.plist` and `google-services.json` config files are gitignored for security).
+You’ll need Firebase config files (`GoogleService-Info.plist` and `google-services.json` are gitignored).
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for full setup instructions.
+iOS: open `ios/Apprch.xcodeproj`, pick an iPhone simulator, press **⌘R**.
 
----
-
-## Contributing
-
-Fresh Scoop is open source and contributions are welcome — bug fixes, new event types, UI improvements, or anything on the roadmap.
-
-1. Fork the repo
-2. Create a branch from `main`
-3. Open a pull request with a clear description
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed setup and guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup.
 
 ---
 

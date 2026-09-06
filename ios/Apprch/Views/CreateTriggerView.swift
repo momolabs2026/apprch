@@ -6,23 +6,38 @@ import FirebaseFirestore
 struct CreateTriggerView: View {
     let groupId: String
     let solo: Bool
+    var editing: Trigger? = nil
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var name = ""
-    @State private var icon = "📌"
-    @State private var notificationMessage = ""
-    @State private var messageEdited = false
-    @State private var visualization: VisualizationType = .log
+    @State private var name: String
+    @State private var icon: String
+    @State private var notificationMessage: String
+    @State private var messageEdited: Bool
+    @State private var visualization: VisualizationType
+    @State private var accentHex: String
+
+    init(groupId: String, solo: Bool, editing: Trigger? = nil) {
+        self.groupId = groupId
+        self.solo = solo
+        self.editing = editing
+        _name = State(initialValue: editing?.name ?? "")
+        _icon = State(initialValue: editing?.icon ?? "📌")
+        _notificationMessage = State(initialValue: editing?.notificationMessage ?? "")
+        _messageEdited = State(initialValue: editing != nil)
+        _visualization = State(initialValue: editing?.visualization ?? .log)
+        _accentHex = State(initialValue: editing?.accentColorHex ?? TriggerAccent.fallbackHex)
+    }
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var createdTriggerId: String?
+    @State private var copied = false
 
     private let icons = ["📌", "✅", "🏠", "🧹", "💊", "📦", "⭐", "💧", "🍽️", "🔑", "📬", "🗑️", "🚗", "🔔", "🌱", "🧺"]
 
     var body: some View {
         NavigationStack {
-            if let createdTriggerId {
+            if let createdTriggerId, editing == nil {
                 createdState(triggerId: createdTriggerId)
             } else {
                 form
@@ -84,6 +99,47 @@ struct CreateTriggerView: View {
                     .foregroundStyle(.secondary)
             }
 
+            if let editing {
+                Section("NFC tag") {
+                    Text(editing.tagURLString)
+                        .font(.footnote.monospaced())
+                        .textSelection(.enabled)
+                    Text("Write this as a URI in NFC Tools. A website URL opens Safari instead of the app.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    NFCWriteButton(urlString: editing.tagURLString)
+                    Button {
+                        UIPasteboard.general.string = editing.tagURLString
+                        copied = true
+                    } label: {
+                        Label(copied ? "Copied" : "Copy link", systemImage: copied ? "checkmark" : "doc.on.doc")
+                    }
+                }
+            }
+
+            Section("Accent color") {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 8), spacing: 10) {
+                    ForEach(TriggerAccent.presets, id: \.self) { hex in
+                        Button {
+                            accentHex = hex
+                        } label: {
+                            Circle()
+                                .fill(Color(hex: hex))
+                                .overlay {
+                                    if accentHex.uppercased() == hex.uppercased() {
+                                        Image(systemName: "checkmark")
+                                            .font(.caption.bold())
+                                            .foregroundStyle(.white)
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Accent \(hex)")
+                    }
+                }
+                ColorPicker("Custom color", selection: accentBinding, supportsOpacity: false)
+            }
+
             if let errorMessage {
                 Section {
                     Text(errorMessage)
@@ -92,7 +148,7 @@ struct CreateTriggerView: View {
                 }
             }
         }
-        .navigationTitle("Create a Trigger")
+        .navigationTitle(editing == nil ? "Create a Trigger" : "Edit Trigger")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -113,7 +169,7 @@ struct CreateTriggerView: View {
                 .font(.system(size: 64))
             Text(name.isEmpty ? "Trigger created" : name)
                 .font(.title2.bold())
-            Text("Hold your iPhone to an NFC tag to write this Trigger. You can also copy the link.")
+            Text("Copy this into NFC Tools as a URI (not a website). Tapping the tag opens Apprch and logs it.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -165,21 +221,36 @@ struct CreateTriggerView: View {
         isSaving = true
         errorMessage = nil
         do {
-            let ref = Firestore.firestore().collection("triggers").document()
-            try await ref.setData([
-                "groupId": groupId,
+            let payload: [String: Any] = [
                 "name": name.trimmingCharacters(in: .whitespacesAndNewlines),
                 "icon": icon,
                 "notificationMessage": notificationMessage.trimmingCharacters(in: .whitespacesAndNewlines),
                 "visualizationType": visualization.rawValue,
-                "createdByUid": uid,
-                "createdAt": FieldValue.serverTimestamp(),
-                "eventCount": 0
-            ])
-            createdTriggerId = ref.documentID
+                "accentColorHex": accentHex
+            ]
+            if let editing, let id = editing.id {
+                try await Firestore.firestore().collection("triggers").document(id).updateData(payload)
+                dismiss()
+            } else {
+                var data = payload
+                data["groupId"] = groupId
+                data["createdByUid"] = uid
+                data["createdAt"] = FieldValue.serverTimestamp()
+                data["eventCount"] = 0
+                let ref = Firestore.firestore().collection("triggers").document()
+                try await ref.setData(data)
+                createdTriggerId = ref.documentID
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
         isSaving = false
+    }
+
+    private var accentBinding: Binding<Color> {
+        Binding(
+            get: { Color(hex: accentHex) },
+            set: { accentHex = $0.hexString() }
+        )
     }
 }

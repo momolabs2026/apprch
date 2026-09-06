@@ -16,7 +16,7 @@ struct NFCWriteButton: View {
             .buttonStyle(.borderedProminent)
 
             if !NFCTagController.isAvailable {
-                Text("NFC writing needs a physical iPhone, not the Simulator.")
+                Text(NFCTagController.unavailableMessage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

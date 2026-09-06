@@ -14,15 +14,42 @@
         background: #faf7f2;
         color: #1c1b19;
       }
-      main { text-align: center; padding: 32px; }
+      main { text-align: center; padding: 32px; max-width: 28rem; }
       h1 { font-size: 2rem; margin-bottom: 8px; }
       p { color: #5c574f; }
+      #hint { font-size: 0.9rem; margin-top: 20px; line-height: 1.4; }
+      a.button {
+        display: inline-block;
+        margin-top: 24px;
+        padding: 14px 22px;
+        border-radius: 999px;
+        background: #1c1b19;
+        color: #faf7f2;
+        text-decoration: none;
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Apprch</h1>
-      <p>Tap once. Everyone knows.</p>
+      <p id="copy">Tap once. Everyone knows.</p>
+      <a id="open" class="button" hidden href="#">Open in Apprch</a>
+      <p id="hint" hidden></p>
     </main>
+    <script>
+      const parts = location.pathname.split("/").filter(Boolean);
+      const open = document.getElementById("open");
+      const copy = document.getElementById("copy");
+      const hint = document.getElementById("hint");
+      if (parts[0] === "t" && parts[1]) {
+        copy.textContent = "This tag is ready. Open Apprch to log it.";
+        open.href = "apprch://open?id=" + encodeURIComponent(parts[1]);
+        open.hidden = false;
+        hint.hidden = false;
+        hint.textContent =
+          "If the phone says the address is not valid, ignore this page. Open the Apprch app, tap the Trigger, then tap Log.";
+      }
+    </script>
   </body>
 </html>

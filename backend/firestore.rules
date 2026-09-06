@@ -6,20 +6,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function myUserDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function sameGroup(groupId) {
-      return signedIn() && myUserDoc().groupId == groupId;
+    function isMemberOf(groupId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/groups/$(groupId))
+        && request.auth.uid in
+          get(/databases/$(database)/documents/groups/$(groupId)).data.memberUids;
     }
 
     match /users/{uid} {
-      allow read: if signedIn() && (
-        request.auth.uid == uid ||
-        ('groupId' in resource.data
-          && myUserDoc().groupId == resource.data.groupId)
-      );
+      allow get: if signedIn();
+      allow list: if signedIn() && request.query.limit <= 20;
       allow write: if signedIn() && request.auth.uid == uid;
     }
 
@@ -33,10 +29,25 @@ service cloud.firestore {
         && request.resource.data.name.size() > 0
         && request.resource.data.solo is bool;
       allow update: if signedIn()
+        && request.auth.uid in resource.data.memberUids
         && request.auth.uid in request.resource.data.memberUids
-        && request.resource.data.solo != true
-        && resource.data.solo != true
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']);
+        && (
+          (
+            resource.data.solo != true
+            && request.resource.data.solo != true
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['memberUids'])
+          )
+          || (
+            resource.data.solo != true
+            && request.resource.data.solo != true
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['inviteCode'])
+            && request.resource.data.inviteCode is string
+            && request.resource.data.inviteCode.size() == 6
+            && !('inviteCode' in resource.data)
+          )
+        );
       allow delete: if false;
     }
 
@@ -49,16 +60,26 @@ service cloud.firestore {
     }
 
     match /triggers/{triggerId} {
-      allow read: if sameGroup(resource.data.groupId);
-      allow create: if signedIn()
-        && request.resource.data.groupId == myUserDoc().groupId
+      allow read: if isMemberOf(resource.data.groupId);
+      allow create: if isMemberOf(request.resource.data.groupId)
         && request.resource.data.createdByUid == request.auth.uid;
-      allow update, delete: if sameGroup(resource.data.groupId);
+      allow update: if isMemberOf(resource.data.groupId)
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['groupId'])
+          || isMemberOf(request.resource.data.groupId)
+        );
+      allow delete: if isMemberOf(resource.data.groupId);
     }
 
     match /events/{eventId} {
-      allow read: if sameGroup(resource.data.groupId);
-      allow write: if false;
+      allow read: if isMemberOf(resource.data.groupId);
+      allow create: if isMemberOf(request.resource.data.groupId)
+        && request.resource.data.triggerId is string
+        && request.resource.data.triggeredByUid == request.auth.uid;
+      allow update: if isMemberOf(resource.data.groupId)
+        && isMemberOf(request.resource.data.groupId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['groupId']);
+      allow delete: if isMemberOf(resource.data.groupId);
     }
   }
 }

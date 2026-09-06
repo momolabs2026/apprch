@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
+import com.apprch.app.data.GroupStore
 import com.apprch.app.model.GroupEvent
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -56,6 +59,7 @@ fun HomeScreen(
     val context = LocalContext.current
     var events by remember { mutableStateOf<List<GroupEvent>>(emptyList()) }
     var authorNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var showingInvite by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -110,6 +114,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("Apprch") },
                 actions = {
+                    TextButton(onClick = { showingInvite = true }) {
+                        Text(if (solo) "Invite people" else "Invite")
+                    }
                     TextButton(onClick = onSignOut) { Text("Sign out") }
                 }
             )
@@ -122,6 +129,9 @@ fun HomeScreen(
             )
         }
     ) { padding ->
+        if (showingInvite) {
+            InviteDialog(groupId = groupId, solo = solo, onDismiss = { showingInvite = false })
+        }
         if (events.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -148,6 +158,55 @@ fun HomeScreen(
             }
         }
     }
+}
+
+@Composable
+private fun InviteDialog(groupId: String, solo: Boolean, onDismiss: () -> Unit) {
+    var code by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(!solo) }
+
+    LaunchedEffect(groupId, solo) {
+        if (!solo) {
+            try {
+                code = GroupStore.enableInvites(groupId)
+            } catch (e: Exception) {
+                error = GroupStore.userFacingMessage(e)
+            }
+            loading = false
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Invite") },
+        text = {
+            Column {
+                when {
+                    loading -> CircularProgressIndicator()
+                    code != null -> Text(
+                        code!!,
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    else -> {
+                        Text("Solo stays private. On iOS, open a Trigger and share that one into a group.")
+                    }
+                }
+                error?.let {
+                    Spacer(Modifier.height(8.dp))
+                    Text(it, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Done") }
+        },
+        dismissButton = {
+            if (code == null) {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        }
+    )
 }
 
 @Composable

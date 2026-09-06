@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import FirebaseFirestore
 
 enum VisualizationType: String, Codable, CaseIterable, Identifiable {
@@ -34,12 +35,22 @@ struct Trigger: Identifiable, Codable {
     var lastTriggeredAt: Timestamp?
     var lastTriggeredByUid: String?
     var eventCount: Int?
+    var accentColorHex: String?
 
     var visualization: VisualizationType {
         VisualizationType(rawValue: visualizationType) ?? .log
     }
 
     var tagURLString: String {
-        "https://apprch.web.app/t/\(id ?? "")"
+        AppLinks.tagURL(triggerId: id ?? "")
+    }
+
+    var isCompletedToday: Bool {
+        guard let last = lastTriggeredAt?.dateValue() else { return false }
+        return Calendar.current.isDateInToday(last)
+    }
+
+    var accent: Color {
+        Color(hex: accentColorHex ?? TriggerAccent.fallbackHex)
     }
 }

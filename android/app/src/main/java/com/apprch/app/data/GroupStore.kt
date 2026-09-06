@@ -26,9 +26,18 @@ object GroupStore {
 
         val batch = db.batch()
         batch.set(groupRef, group)
+        val userUpdate = hashMapOf<String, Any>(
+            "groupId" to groupRef.id,
+            "activeGroupId" to groupRef.id,
+            "solo" to solo,
+            "groupIds" to FieldValue.arrayUnion(groupRef.id)
+        )
+        if (solo) {
+            userUpdate["personalGroupId"] = groupRef.id
+        }
         batch.set(
             db.collection("users").document(uid),
-            mapOf("groupId" to groupRef.id, "solo" to solo),
+            userUpdate,
             com.google.firebase.firestore.SetOptions.merge()
         )
         if (inviteCode != null) {
@@ -57,10 +66,46 @@ object GroupStore {
         )
         batch.set(
             db.collection("users").document(uid),
-            mapOf("groupId" to groupId, "solo" to false),
+            mapOf(
+                "groupId" to groupId,
+                "activeGroupId" to groupId,
+                "solo" to false,
+                "groupIds" to FieldValue.arrayUnion(groupId)
+            ),
             com.google.firebase.firestore.SetOptions.merge()
         )
         batch.commit().await()
+    }
+
+    suspend fun enableInvites(groupId: String, name: String? = null): String {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+            ?: throw IllegalStateException("Please sign in again.")
+        val db = FirebaseFirestore.getInstance()
+        val groupRef = db.collection("groups").document(groupId)
+        val snapshot = groupRef.get().await()
+        val data = snapshot.data ?: throw IllegalStateException("Couldn’t load this group.")
+        val members = data["memberUids"] as? List<*> ?: emptyList<Any>()
+        if (!members.contains(uid)) {
+            throw IllegalStateException("Couldn’t load this group.")
+        }
+
+        if (data["solo"] as? Boolean == true) {
+            throw IllegalStateException("Invite from a group, or move a Trigger into a new group.")
+        }
+        val existing = (data["inviteCode"] as? String)?.trim()
+        if (!existing.isNullOrEmpty()) {
+            return existing
+        }
+
+        val code = randomInviteCode()
+        val batch = db.batch()
+        batch.update(groupRef, mapOf("inviteCode" to code))
+        batch.set(
+            db.collection("inviteCodes").document(code),
+            mapOf("groupId" to groupId, "createdByUid" to uid)
+        )
+        batch.commit().await()
+        return code
     }
 
     fun userFacingMessage(error: Throwable): String {

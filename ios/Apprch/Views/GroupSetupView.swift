@@ -93,7 +93,7 @@ struct GroupSetupView: View {
 
     private var title: String {
         switch mode {
-        case .choose: return "How do you want to use Apprch?"
+        case .choose: return "Start with Solo, or add a group"
         case .create: return "Create a group"
         case .join: return "Join a group"
         }
@@ -101,9 +101,9 @@ struct GroupSetupView: View {
 
     private var subtitle: String {
         switch mode {
-        case .choose: return "Solo is a private log for you. A group notifies everyone you invite."
-        case .create: return "Triggers are shared with everyone you invite."
-        case .join: return "Enter the invite code from someone already in the group."
+        case .choose: return "You’ll always keep a Solo space. Groups are extra spaces you can move Triggers into."
+        case .create: return "This adds a group next to your Solo space. Triggers stay private until you move one."
+        case .join: return "Enter the invite code. Your Solo space stays yours."
         }
     }
 

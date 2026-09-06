@@ -22,19 +22,17 @@ fun RootScreen(state: AppState, viewModel: AppViewModel) {
         is AppState.Unauthenticated -> AuthScreen()
         is AppState.NeedsGroup -> GroupSetupScreen(onSignOut = viewModel::signOut)
         is AppState.Ready -> {
-            val pendingEvent by viewModel.pendingEvent.collectAsState()
+            val pendingTriggerId by viewModel.pendingTriggerId.collectAsState()
             HomeScreen(
-                groupId = state.groupId,
-                solo = state.solo,
-                onManualLog = { viewModel.setPendingEvent("update") },
+                active = state.active,
+                spaces = state.spaces,
+                onSelectSpace = viewModel::selectSpace,
                 onSignOut = viewModel::signOut
             )
-            pendingEvent?.let { eventType ->
+            pendingTriggerId?.let { triggerId ->
                 ConfirmEventDialog(
-                    eventType = eventType,
-                    groupId = state.groupId,
-                    solo = state.solo,
-                    onDismiss = viewModel::clearPendingEvent
+                    triggerId = triggerId,
+                    onDismiss = viewModel::clearPendingTrigger
                 )
             }
         }

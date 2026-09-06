@@ -17,7 +17,7 @@ If you are inviting a collaborator: give them **Read** access so they fork and o
 
 The iOS MVP is usable. These are the next useful slices:
 
-- Android home / spaces / Trigger detail to match iOS
+- Android NFC write
 - Push notification when another member logs a Trigger
 - Leave a group, and remove a member
 - Universal Links after Apple Developer enrollment

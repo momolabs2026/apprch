@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.apprch.app.data.GroupStore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
@@ -119,7 +120,10 @@ fun AuthScreen() {
                                         .build()
                                 ).await()
                                 db.collection("users").document(user.uid)
-                                    .set(mapOf("displayName" to displayName.trim()), SetOptions.merge())
+                                    .set(
+                                        GroupStore.directoryFields(displayName.trim(), email.trim()),
+                                        SetOptions.merge()
+                                    )
                                     .await()
                             }
                         } else {

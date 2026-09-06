@@ -24,15 +24,15 @@ This is the slice people can use and build on. It is not the finished product.
 - Keep a private **Solo** space and one or more **Groups**
 - Create, edit, and move Triggers between spaces
 - Check a Trigger for today (the circle resets each day)
-- Write an NFC tag and tap it to log
+- Write an NFC tag on iOS and tap it to log on iOS or Android
 - See a GitHub-style heatmap plus a short history
-- Invite people with a group code
+- Invite people by search or share code
 - See group members as chips
-- Edit your name, password, and profile photo
+- Edit your name, password, profile photo, and appearance
 
 **Still open — good work for the repo:**
 
-- Android trigger / space UI to match iOS
+- Android NFC write
 - Push when someone else logs (FCM tokens exist; fan-out is not reliable yet)
 - Universal Links (`https://apprch.web.app/t/...`) — needs a paid Apple Developer account
 - Leave a group / remove a member
@@ -90,7 +90,7 @@ Visualization types in v1: **Log** and **Counter**.
 
 - [x] Phase 1 — Firebase backend
 - [x] Phase 2 — iOS Triggers, spaces, heatmap, profile
-- [ ] Phase 3 — Android trigger / space redesign
+- [x] Phase 3 — Android trigger / space redesign
 - [x] Phase 4 — NFC write / read in the iOS app
 - [ ] Phase 5 — Calendar / streak / checklist visualizations + widgets
 

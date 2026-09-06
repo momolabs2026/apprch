@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.apprch.app.data.AppearancePrefs
 import com.apprch.app.ui.AppViewModel
 import com.apprch.app.ui.RootScreen
 import com.apprch.app.ui.theme.ApprchTheme
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppearancePrefs.load(this)
         enableEdgeToEdge()
         handleIntent(intent)
         setContent {
@@ -36,10 +38,12 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent) {
         val data = intent.data ?: return
-        val first = data.pathSegments.getOrNull(0)
-        if (data.scheme == "https" && (first == "t" || first == "trigger")) {
-            val eventType = data.pathSegments.getOrNull(1) ?: return
-            appViewModel.setPendingEvent(eventType)
-        }
+        val triggerId = when {
+            data.scheme == "apprch" -> data.getQueryParameter("id")
+            data.scheme == "https" && data.pathSegments.getOrNull(0) in listOf("t", "trigger") ->
+                data.pathSegments.getOrNull(1)
+            else -> null
+        } ?: return
+        appViewModel.setPendingTrigger(triggerId)
     }
 }

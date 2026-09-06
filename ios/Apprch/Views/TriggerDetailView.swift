@@ -43,6 +43,8 @@ struct TriggerDetailView: View {
                 Text(trigger.tagURLString)
                     .font(.footnote.monospaced())
                     .textSelection(.enabled)
+                NFCWriteButton(urlString: trigger.tagURLString)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                 Button {
                     UIPasteboard.general.string = trigger.tagURLString
                     copied = true

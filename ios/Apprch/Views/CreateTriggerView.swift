@@ -113,7 +113,7 @@ struct CreateTriggerView: View {
                 .font(.system(size: 64))
             Text(name.isEmpty ? "Trigger created" : name)
                 .font(.title2.bold())
-            Text("Write this link to an NFC tag with a tool like NFC Tools.")
+            Text("Hold your iPhone to an NFC tag to write this Trigger. You can also copy the link.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -126,13 +126,16 @@ struct CreateTriggerView: View {
                 .background(Color.secondary.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal)
 
-            Button {
-                UIPasteboard.general.string = url
-            } label: {
-                Label("Copy link", systemImage: "doc.on.doc")
-                    .frame(maxWidth: .infinity)
+            VStack(spacing: 12) {
+                NFCWriteButton(urlString: url)
+                Button {
+                    UIPasteboard.general.string = url
+                } label: {
+                    Label("Copy link", systemImage: "doc.on.doc")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.borderedProminent)
             .padding(.horizontal)
 
             Spacer()

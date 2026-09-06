@@ -36,11 +36,11 @@ SwiftUI: sign in → create or join a household → home list of Triggers. Unive
 
 ### NFC flow
 
-1. Create a Trigger in the app and copy `https://apprch.web.app/t/{triggerId}`
-2. Write that URL to a physical tag (NFC Tools or similar)
-3. Tapping the tag opens Apprch to a confirm screen
+1. Create a Trigger in the app
+2. Tap **Write to tag** and hold the iPhone to an NFC tag (no extra app)
+3. Tapping the tag later opens Apprch to a confirm screen — or use **Read tag** on Home
 4. Confirm calls `logEvent` with `triggerId`
-5. The Cloud Function writes `events/{eventId}` and notifies the household with the Trigger’s custom message
+5. The Cloud Function writes `events/{eventId}` and notifies the group with the Trigger’s custom message
 
 ### Data model
 
@@ -60,7 +60,7 @@ Visualization types in v1: **Log** and **Counter**.
 - [x] Phase 1 — Firebase backend
 - [x] Phase 2 — iOS Triggers
 - [ ] Phase 3 — Android trigger redesign
-- [ ] Phase 4 — NFC tag setup + end-to-end test
+- [x] Phase 4 — NFC write / read in the iOS app
 - [ ] Phase 5 — Calendar / streak / checklist visualizations + widgets
 
 ---

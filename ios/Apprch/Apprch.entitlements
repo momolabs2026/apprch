@@ -8,5 +8,10 @@
 		<string>applinks:www.apprch.app</string>
 		<string>applinks:apprch.web.app</string>
 	</array>
+	<key>com.apple.developer.nfc.readersession.formats</key>
+	<array>
+		<string>NDEF</string>
+		<string>TAG</string>
+	</array>
 </dict>
 </plist>

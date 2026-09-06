@@ -24,7 +24,7 @@ struct HomeView: View {
                     } description: {
                         Text(solo
                             ? "Create a Trigger and tap its tag to log it as a reminder for yourself."
-                            : "Create a Trigger, write its link to an NFC tag, and everyone in your group gets notified when it’s tapped.")
+                            : "Create a Trigger, write it to an NFC tag in the app, and everyone in your group gets notified when it’s tapped.")
                     } actions: {
                         Button("Create a Trigger") { showingCreate = true }
                             .buttonStyle(.borderedProminent)
@@ -47,6 +47,11 @@ struct HomeView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Sign out") { try? authVM.signOut() }
                         .font(.footnote)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NFCReadButton { url in
+                        authVM.handleIncomingURL(url)
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {

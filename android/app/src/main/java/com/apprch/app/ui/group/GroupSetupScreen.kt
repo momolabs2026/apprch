@@ -28,15 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
-import com.google.firebase.functions.FirebaseFunctions
+import com.apprch.app.data.GroupStore
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 private enum class Mode { CHOOSE, CREATE, JOIN }
 
 @Composable
 fun GroupSetupScreen(onSignOut: () -> Unit) {
-    val functions = remember { FirebaseFunctions.getInstance() }
     val scope = rememberCoroutineScope()
 
     var mode by remember { mutableStateOf(Mode.CHOOSE) }
@@ -54,20 +52,60 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Set up your group", style = MaterialTheme.typography.headlineMedium)
+        Text(
+            when (mode) {
+                Mode.CHOOSE -> "How do you want to use Apprch?"
+                Mode.CREATE -> "Create a group"
+                Mode.JOIN -> "Join a group"
+            },
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            when (mode) {
+                Mode.CHOOSE -> "Solo is a private log for you. A group notifies everyone you invite."
+                Mode.CREATE -> "Triggers are shared with everyone you invite."
+                Mode.JOIN -> "Enter the invite code from someone already in the group."
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(Modifier.height(32.dp))
 
         when (mode) {
             Mode.CHOOSE -> {
                 Button(
-                    onClick = { mode = Mode.CREATE },
+                    onClick = {
+                        scope.launch {
+                            isLoading = true
+                            errorMessage = null
+                            try {
+                                GroupStore.create(name = "Solo", solo = true)
+                            } catch (e: Exception) {
+                                errorMessage = GroupStore.userFacingMessage(e)
+                            }
+                            isLoading = false
+                        }
+                    },
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Create a new group") }
+                ) {
+                    if (isLoading) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                    else Text("Use solo")
+                }
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = { mode = Mode.CREATE },
+                    enabled = !isLoading,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Create a group") }
                 Spacer(Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = { mode = Mode.JOIN },
+                    enabled = !isLoading,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Join with invite code") }
+                ErrorLabel(errorMessage)
             }
 
             Mode.CREATE -> {
@@ -84,13 +122,11 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
                     scope.launch {
                         isLoading = true
                         errorMessage = null
-                        try {
-                            functions.getHttpsCallable("createGroup")
-                                .call(mapOf("name" to groupName.trim()))
-                                .await()
-                        } catch (e: Exception) {
-                            errorMessage = e.localizedMessage
-                        }
+                            try {
+                                GroupStore.create(name = groupName.trim(), solo = false)
+                            } catch (e: Exception) {
+                                errorMessage = GroupStore.userFacingMessage(e)
+                            }
                         isLoading = false
                     }
                 }
@@ -111,13 +147,11 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
                     scope.launch {
                         isLoading = true
                         errorMessage = null
-                        try {
-                            functions.getHttpsCallable("joinGroup")
-                                .call(mapOf("inviteCode" to inviteCode.trim()))
-                                .await()
-                        } catch (e: Exception) {
-                            errorMessage = e.localizedMessage
-                        }
+                            try {
+                                GroupStore.join(inviteCode.trim())
+                            } catch (e: Exception) {
+                                errorMessage = GroupStore.userFacingMessage(e)
+                            }
                         isLoading = false
                     }
                 }

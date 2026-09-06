@@ -5,6 +5,7 @@ import FirebaseFirestore
 
 struct CreateTriggerView: View {
     let groupId: String
+    let solo: Bool
 
     @Environment(\.dismiss) private var dismiss
 
@@ -63,8 +64,8 @@ struct CreateTriggerView: View {
                 .padding(.vertical, 4)
             }
 
-            Section("Notification message") {
-                TextField("What should the group see?", text: $notificationMessage, axis: .vertical)
+            Section(solo ? "Reminder note" : "Notification message") {
+                TextField(solo ? "What should you see on this log?" : "What should the group see?", text: $notificationMessage, axis: .vertical)
                     .lineLimit(2...4)
                     .onChange(of: notificationMessage) { _, _ in
                         messageEdited = true

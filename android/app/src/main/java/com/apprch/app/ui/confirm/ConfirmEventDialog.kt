@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 @Composable
-fun ConfirmEventDialog(eventType: String, groupId: String, onDismiss: () -> Unit) {
+fun ConfirmEventDialog(eventType: String, groupId: String, solo: Boolean = false, onDismiss: () -> Unit) {
     val functions = remember { FirebaseFunctions.getInstance() }
     val scope = rememberCoroutineScope()
 
@@ -49,9 +49,9 @@ fun ConfirmEventDialog(eventType: String, groupId: String, onDismiss: () -> Unit
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (didSend) {
-                    Text("Notification sent!", style = MaterialTheme.typography.bodyLarge)
+                    Text(if (solo) "Logged" else "Notification sent!", style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    Text("Send a push notification to your group?")
+                    Text(if (solo) "Log this as a reminder for yourself?" else "Send a push notification to your group?")
                     errorMessage?.let {
                         Spacer(Modifier.height(8.dp))
                         Text(
@@ -84,7 +84,7 @@ fun ConfirmEventDialog(eventType: String, groupId: String, onDismiss: () -> Unit
                     enabled = !isSending
                 ) {
                     if (isSending) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    else Text("Send notification")
+                    else Text(if (solo) "Log it" else "Send notification")
                 }
             }
         },

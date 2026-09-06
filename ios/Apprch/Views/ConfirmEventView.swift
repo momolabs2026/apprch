@@ -5,6 +5,7 @@ import FirebaseFunctions
 struct ConfirmEventView: View {
     let triggerId: String
     let groupId: String
+    let solo: Bool
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authVM: AuthViewModel
@@ -54,12 +55,12 @@ struct ConfirmEventView: View {
             Text(trigger.name)
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
-            Text("Send a notification to your group?")
+            Text(solo ? "Log this as a reminder for yourself?" : "Send a notification to your group?")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
             if didSend {
-                Label("Notification sent", systemImage: "checkmark.circle.fill")
+                Label(solo ? "Logged" : "Notification sent", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .font(.headline)
             } else {
@@ -76,7 +77,7 @@ struct ConfirmEventView: View {
                         if isSending {
                             ProgressView().frame(maxWidth: .infinity)
                         } else {
-                            Text("Send notification").frame(maxWidth: .infinity)
+                            Text(solo ? "Log it" : "Send notification").frame(maxWidth: .infinity)
                         }
                     }
                     .buttonStyle(.borderedProminent)

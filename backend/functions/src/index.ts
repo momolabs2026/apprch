@@ -18,30 +18,32 @@ export const createGroup = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
   }
 
-  const name = data?.name as string | undefined;
-  if (!name?.trim()) {
+  const solo = data?.solo === true;
+  const name = (data?.name as string | undefined)?.trim();
+  if (!solo && !name) {
     throw new functions.https.HttpsError("invalid-argument", "Group name is required.");
   }
 
   const uid = context.auth.uid;
-  const inviteCode = randomInviteCode();
+  const inviteCode = solo ? null : randomInviteCode();
 
   const groupRef = db.collection("groups").doc();
   await db.runTransaction(async (tx) => {
     tx.set(groupRef, {
-      name: name.trim(),
+      name: name || "Solo",
+      solo,
       inviteCode,
       memberUids: [uid],
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
     tx.set(
       db.collection("users").doc(uid),
-      { groupId: groupRef.id, displayName: context.auth!.token.name ?? "" },
+      { groupId: groupRef.id, solo, displayName: context.auth!.token.name ?? "" },
       { merge: true }
     );
   });
 
-  return { groupId: groupRef.id, inviteCode };
+  return { groupId: groupRef.id, inviteCode, solo };
 });
 
 export const joinGroup = functions.https.onCall(async (data, context) => {
@@ -68,6 +70,12 @@ export const joinGroup = functions.https.onCall(async (data, context) => {
 
   const groupDoc = snap.docs[0];
   const groupId = groupDoc.id;
+  if (groupDoc.data()?.solo === true) {
+    throw new functions.https.HttpsError(
+      "failed-precondition",
+      "This is a solo space and can’t be joined."
+    );
+  }
 
   await db.runTransaction(async (tx) => {
     tx.update(groupDoc.ref, {
@@ -75,12 +83,12 @@ export const joinGroup = functions.https.onCall(async (data, context) => {
     });
     tx.set(
       db.collection("users").doc(uid),
-      { groupId, displayName: context.auth!.token.name ?? "" },
+      { groupId, solo: false, displayName: context.auth!.token.name ?? "" },
       { merge: true }
     );
   });
 
-  return { groupId };
+  return { groupId, solo: false };
 });
 
 export const logEvent = functions.https.onCall(async (data, context) => {

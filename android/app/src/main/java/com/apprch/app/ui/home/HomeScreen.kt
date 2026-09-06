@@ -48,6 +48,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     groupId: String,
+    solo: Boolean = false,
     onManualLog: () -> Unit,
     onSignOut: () -> Unit
 ) {
@@ -131,7 +132,8 @@ fun HomeScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("No events yet", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        "Create a Trigger on iOS, then tap its NFC tag.",
+                        if (solo) "Create a Trigger on iOS, then tap its tag to log it for yourself."
+                        else "Create a Trigger on iOS, then tap its NFC tag.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

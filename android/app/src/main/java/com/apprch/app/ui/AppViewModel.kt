@@ -15,7 +15,7 @@ sealed class AppState {
     data object Loading : AppState()
     data object Unauthenticated : AppState()
     data object NeedsGroup : AppState()
-    data class Ready(val groupId: String) : AppState()
+    data class Ready(val groupId: String, val solo: Boolean = false) : AppState()
 }
 
 class AppViewModel : ViewModel() {
@@ -68,8 +68,9 @@ class AppViewModel : ViewModel() {
         userListener = db.collection("users").document(uid)
             .addSnapshotListener { snapshot, _ ->
                 val groupId = snapshot?.getString("groupId")
+                val solo = snapshot?.getBoolean("solo") ?: false
                 _state.value = if (groupId != null) {
-                    AppState.Ready(groupId)
+                    AppState.Ready(groupId, solo)
                 } else {
                     AppState.NeedsGroup
                 }

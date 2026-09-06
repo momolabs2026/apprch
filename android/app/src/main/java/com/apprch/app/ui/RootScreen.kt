@@ -25,6 +25,7 @@ fun RootScreen(state: AppState, viewModel: AppViewModel) {
             val pendingEvent by viewModel.pendingEvent.collectAsState()
             HomeScreen(
                 groupId = state.groupId,
+                solo = state.solo,
                 onManualLog = { viewModel.setPendingEvent("update") },
                 onSignOut = viewModel::signOut
             )
@@ -32,6 +33,7 @@ fun RootScreen(state: AppState, viewModel: AppViewModel) {
                 ConfirmEventDialog(
                     eventType = eventType,
                     groupId = state.groupId,
+                    solo = state.solo,
                     onDismiss = viewModel::clearPendingEvent
                 )
             }

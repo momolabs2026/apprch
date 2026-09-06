@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseFunctions
 
 struct GroupSetupView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -17,9 +16,9 @@ struct GroupSetupView: View {
             VStack(spacing: 32) {
                 Spacer()
                 VStack(spacing: 8) {
-                    Text("Set up your group")
+                    Text(title)
                         .font(.title.bold())
-                    Text("Triggers are shared with everyone you invite.")
+                    Text(subtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -28,17 +27,31 @@ struct GroupSetupView: View {
                 switch mode {
                 case .choose:
                     VStack(spacing: 16) {
-                        Button("Create a group") {
-                            withAnimation { mode = .create }
+                        Button("Use solo") {
+                            Task { await startSolo() }
                         }
                         .buttonStyle(.borderedProminent)
                         .frame(maxWidth: .infinity)
+                        .disabled(isLoading)
+
+                        Button("Create a group") {
+                            withAnimation { mode = .create }
+                        }
+                        .buttonStyle(.bordered)
+                        .frame(maxWidth: .infinity)
+                        .disabled(isLoading)
 
                         Button("Join with invite code") {
                             withAnimation { mode = .join }
                         }
                         .buttonStyle(.bordered)
                         .frame(maxWidth: .infinity)
+                        .disabled(isLoading)
+
+                        if isLoading {
+                            ProgressView()
+                        }
+                        errorLabel
                     }
                     .padding(.horizontal)
 
@@ -78,6 +91,22 @@ struct GroupSetupView: View {
         }
     }
 
+    private var title: String {
+        switch mode {
+        case .choose: return "How do you want to use Apprch?"
+        case .create: return "Create a group"
+        case .join: return "Join a group"
+        }
+    }
+
+    private var subtitle: String {
+        switch mode {
+        case .choose: return "Solo is a private log for you. A group notifies everyone you invite."
+        case .create: return "Triggers are shared with everyone you invite."
+        case .join: return "Enter the invite code from someone already in the group."
+        }
+    }
+
     @ViewBuilder private var errorLabel: some View {
         if let msg = errorMessage {
             Text(msg).foregroundStyle(.red).font(.caption)
@@ -87,6 +116,7 @@ struct GroupSetupView: View {
     private var backButton: some View {
         Button("Back") { withAnimation { mode = .choose } }
             .font(.footnote)
+            .disabled(isLoading)
     }
 
     private func submitButton(_ label: String, action: @escaping () async -> Void) -> some View {
@@ -103,15 +133,25 @@ struct GroupSetupView: View {
         .disabled(isLoading)
     }
 
+    private func startSolo() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            try await GroupStore.create(name: "Solo", solo: true)
+        } catch {
+            errorMessage = GroupStore.userFacingMessage(for: error)
+        }
+        isLoading = false
+    }
+
     private func createGroup() async {
         guard !groupName.isEmpty else { return }
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("createGroup")
-            _ = try await fn.call(["name": groupName])
+            try await GroupStore.create(name: groupName.trimmingCharacters(in: .whitespacesAndNewlines), solo: false)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = GroupStore.userFacingMessage(for: error)
         }
         isLoading = false
     }
@@ -121,10 +161,9 @@ struct GroupSetupView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("joinGroup")
-            _ = try await fn.call(["inviteCode": inviteCode.uppercased()])
+            try await GroupStore.join(inviteCode: inviteCode)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = GroupStore.userFacingMessage(for: error)
         }
         isLoading = false
     }

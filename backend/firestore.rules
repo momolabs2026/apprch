@@ -26,7 +26,26 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow read: if signedIn()
         && request.auth.uid in resource.data.memberUids;
-      allow write: if false;
+      allow create: if signedIn()
+        && request.resource.data.memberUids.size() == 1
+        && request.auth.uid in request.resource.data.memberUids
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.solo is bool;
+      allow update: if signedIn()
+        && request.auth.uid in request.resource.data.memberUids
+        && request.resource.data.solo != true
+        && resource.data.solo != true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberUids']);
+      allow delete: if false;
+    }
+
+    match /inviteCodes/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.groupId is string
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow list, update, delete: if false;
     }
 
     match /triggers/{triggerId} {

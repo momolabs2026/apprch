@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseFunctions
 
 struct GroupSetupView: View {
     @EnvironmentObject var authVM: AuthViewModel
@@ -138,10 +137,9 @@ struct GroupSetupView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("createGroup")
-            _ = try await fn.call(["solo": true])
+            try await GroupStore.create(name: "Solo", solo: true)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = GroupStore.userFacingMessage(for: error)
         }
         isLoading = false
     }
@@ -151,10 +149,9 @@ struct GroupSetupView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("createGroup")
-            _ = try await fn.call(["name": groupName])
+            try await GroupStore.create(name: groupName.trimmingCharacters(in: .whitespacesAndNewlines), solo: false)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = GroupStore.userFacingMessage(for: error)
         }
         isLoading = false
     }
@@ -164,10 +161,9 @@ struct GroupSetupView: View {
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("joinGroup")
-            _ = try await fn.call(["inviteCode": inviteCode.uppercased()])
+            try await GroupStore.join(inviteCode: inviteCode)
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = GroupStore.userFacingMessage(for: error)
         }
         isLoading = false
     }

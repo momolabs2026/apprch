@@ -28,15 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
-import com.google.firebase.functions.FirebaseFunctions
+import com.apprch.app.data.GroupStore
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 private enum class Mode { CHOOSE, CREATE, JOIN }
 
 @Composable
 fun GroupSetupScreen(onSignOut: () -> Unit) {
-    val functions = remember { FirebaseFunctions.getInstance() }
     val scope = rememberCoroutineScope()
 
     var mode by remember { mutableStateOf(Mode.CHOOSE) }
@@ -82,11 +80,9 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
                             isLoading = true
                             errorMessage = null
                             try {
-                                functions.getHttpsCallable("createGroup")
-                                    .call(mapOf("solo" to true))
-                                    .await()
+                                GroupStore.create(name = "Solo", solo = true)
                             } catch (e: Exception) {
-                                errorMessage = e.localizedMessage
+                                errorMessage = GroupStore.userFacingMessage(e)
                             }
                             isLoading = false
                         }
@@ -126,13 +122,11 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
                     scope.launch {
                         isLoading = true
                         errorMessage = null
-                        try {
-                            functions.getHttpsCallable("createGroup")
-                                .call(mapOf("name" to groupName.trim()))
-                                .await()
-                        } catch (e: Exception) {
-                            errorMessage = e.localizedMessage
-                        }
+                            try {
+                                GroupStore.create(name = groupName.trim(), solo = false)
+                            } catch (e: Exception) {
+                                errorMessage = GroupStore.userFacingMessage(e)
+                            }
                         isLoading = false
                     }
                 }
@@ -153,13 +147,11 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
                     scope.launch {
                         isLoading = true
                         errorMessage = null
-                        try {
-                            functions.getHttpsCallable("joinGroup")
-                                .call(mapOf("inviteCode" to inviteCode.trim()))
-                                .await()
-                        } catch (e: Exception) {
-                            errorMessage = e.localizedMessage
-                        }
+                            try {
+                                GroupStore.join(inviteCode.trim())
+                            } catch (e: Exception) {
+                                errorMessage = GroupStore.userFacingMessage(e)
+                            }
                         isLoading = false
                     }
                 }

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Simple cat face, sized for adaptive-icon safe zone -->
+    <path
+        android:fillColor="#2F6F62"
+        android:pathData="M34,40 L40,28 L46,40 Z" />
+    <path
+        android:fillColor="#2F6F62"
+        android:pathData="M62,40 L68,28 L74,40 Z" />
+    <path
+        android:fillColor="#2F6F62"
+        android:pathData="M54,78 C38,78 30,64 30,52 C30,40 40,34 54,34 C68,34 78,40 78,52 C78,64 70,78 54,78 Z" />
+    <path
+        android:fillColor="#FAF7F2"
+        android:pathData="M44,50 A4,4 0 1,1 44.1,50" />
+    <path
+        android:fillColor="#FAF7F2"
+        android:pathData="M64,50 A4,4 0 1,1 64.1,50" />
+    <path
+        android:fillColor="#FAF7F2"
+        android:pathData="M50,60 L54,64 L58,60 Z" />
+</vector>

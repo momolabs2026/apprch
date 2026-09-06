@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "fresh-scoop"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

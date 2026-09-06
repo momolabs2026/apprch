@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.freshscoop.app"
+    namespace = "com.apprch.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.freshscoop.app"
+        applicationId = "com.apprch.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -52,6 +52,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

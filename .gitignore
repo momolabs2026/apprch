@@ -18,15 +18,18 @@ ios/**/*.dSYM.zip
 ios/**/*.dSYM
 ios/**/Pods/
 ios/**/.build/
+ios/build/
 
 # Android
 android/.gradle/
+android/.idea/
 android/local.properties
 android/**/build/
 android/**/*.apk
 android/**/*.aab
 android/**/*.keystore
 android/**/*.jks
+android/**/*.iml
 
 # macOS
 .DS_Store

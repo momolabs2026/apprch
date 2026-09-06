@@ -1,0 +1,15 @@
+package com.apprch.app
+
+import android.app.Application
+import android.app.NotificationManager
+import com.apprch.app.messaging.ApprchMessagingService
+import com.google.firebase.FirebaseApp
+
+class ApprchApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        FirebaseApp.initializeApp(this)
+        val manager = getSystemService(NotificationManager::class.java)
+        ApprchMessagingService.createChannel(manager)
+    }
+}

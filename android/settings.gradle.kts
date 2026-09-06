@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FreshScoop"
+rootProject.name = "Apprch"
 include(":app")

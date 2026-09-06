@@ -2,20 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function myUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function sameHousehold(familyId) {
+      return signedIn() && myUserDoc().familyId == familyId;
+    }
+
     match /users/{uid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if signedIn() && (
+        request.auth.uid == uid ||
+        ('familyId' in resource.data
+          && myUserDoc().familyId == resource.data.familyId)
+      );
+      allow write: if signedIn() && request.auth.uid == uid;
     }
 
     match /families/{familyId} {
-      allow read: if request.auth != null
+      allow read: if signedIn()
         && request.auth.uid in resource.data.memberUids;
       allow write: if false;
     }
 
+    match /triggers/{triggerId} {
+      allow read: if sameHousehold(resource.data.familyId);
+      allow create: if signedIn()
+        && request.resource.data.familyId == myUserDoc().familyId
+        && request.resource.data.createdByUid == request.auth.uid;
+      allow update, delete: if sameHousehold(resource.data.familyId);
+    }
+
     match /events/{eventId} {
-      allow read: if request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.familyId
-           == resource.data.familyId;
+      allow read: if sameHousehold(resource.data.familyId);
       allow write: if false;
     }
   }

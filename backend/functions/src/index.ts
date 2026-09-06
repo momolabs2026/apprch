@@ -13,8 +13,6 @@ function randomInviteCode(): string {
   ).join("");
 }
 
-// ─── createFamily ─────────────────────────────────────────────────────────────
-
 export const createFamily = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
@@ -22,7 +20,7 @@ export const createFamily = functions.https.onCall(async (data, context) => {
 
   const name = data?.name as string | undefined;
   if (!name?.trim()) {
-    throw new functions.https.HttpsError("invalid-argument", "Family name is required.");
+    throw new functions.https.HttpsError("invalid-argument", "Household name is required.");
   }
 
   const uid = context.auth.uid;
@@ -45,8 +43,6 @@ export const createFamily = functions.https.onCall(async (data, context) => {
 
   return { familyId: familyRef.id, inviteCode };
 });
-
-// ─── joinFamily ───────────────────────────────────────────────────────────────
 
 export const joinFamily = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
@@ -87,40 +83,72 @@ export const joinFamily = functions.https.onCall(async (data, context) => {
   return { familyId };
 });
 
-// ─── logEvent ─────────────────────────────────────────────────────────────────
-
 export const logEvent = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
   }
 
-  const type = data?.type as string | undefined;
+  const triggerId = data?.triggerId as string | undefined;
   const familyId = data?.familyId as string | undefined;
-  if (!type || !familyId) {
-    throw new functions.https.HttpsError("invalid-argument", "type and familyId are required.");
+  if (!familyId || !triggerId) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "familyId and triggerId are required."
+    );
   }
 
   const uid = context.auth.uid;
 
-  await db.collection("events").add({
-    familyId,
-    type,
-    triggeredByUid: uid,
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  const triggerDoc = await db.collection("triggers").doc(triggerId).get();
+  if (!triggerDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Trigger not found.");
+  }
+
+  const trigger = triggerDoc.data() ?? {};
+  if (trigger.familyId !== familyId) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "This trigger is not part of your household."
+    );
+  }
 
   const familyDoc = await db.collection("families").doc(familyId).get();
   if (!familyDoc.exists) {
-    throw new functions.https.HttpsError("not-found", "Family not found.");
+    throw new functions.https.HttpsError("not-found", "Household not found.");
   }
 
-  const memberUids: string[] = (familyDoc.data()?.memberUids ?? []).filter(
-    (id: string) => id !== uid
-  );
-  if (memberUids.length === 0) return { sent: 0 };
+  const memberUids: string[] = familyDoc.data()?.memberUids ?? [];
+  if (!memberUids.includes(uid)) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "You are not a member of this household."
+    );
+  }
+
+  const notificationTitle = trigger.name ? `Apprch · ${trigger.name}` : "Apprch";
+  const notificationBody =
+    (trigger.notificationMessage as string | undefined)?.trim() ||
+    `${trigger.icon ?? ""} ${trigger.name ?? "Update"}`.trim();
+
+  await Promise.all([
+    db.collection("events").add({
+      familyId,
+      triggerId,
+      triggeredByUid: uid,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    }),
+    triggerDoc.ref.update({
+      lastTriggeredAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastTriggeredByUid: uid,
+      eventCount: admin.firestore.FieldValue.increment(1),
+    }),
+  ]);
+
+  const recipients = memberUids.filter((id) => id !== uid);
+  if (recipients.length === 0) return { sent: 0 };
 
   const userDocs = await Promise.all(
-    memberUids.map((id) => db.collection("users").doc(id).get())
+    recipients.map((id) => db.collection("users").doc(id).get())
   );
 
   const tokens: string[] = userDocs.flatMap(
@@ -135,8 +163,8 @@ export const logEvent = functions.https.onCall(async (data, context) => {
     const response = await messaging.sendEachForMulticast({
       tokens: chunk,
       notification: {
-        title: "🐱 Fresh Scoop",
-        body: "Momo's litter box has been cleaned!",
+        title: notificationTitle,
+        body: notificationBody,
       },
       apns: { payload: { aps: { sound: "default" } } },
       android: { notification: { sound: "default" } },

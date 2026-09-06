@@ -73,6 +73,8 @@ iOS: open `ios/Apprch.xcodeproj`, pick an iPhone simulator, press **⌘R**.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup.
 
+Changes go through a PR into `staging`. `@momolabs2026` reviews and merges in GitHub — agents and collaborators do not merge.
+
 ---
 
 ## License

@@ -4,7 +4,7 @@ import FirebaseFirestore
 import UserNotifications
 
 struct HomeView: View {
-    let familyId: String
+    let groupId: String
 
     @EnvironmentObject var authVM: AuthViewModel
     @State private var triggers: [Trigger] = []
@@ -21,7 +21,7 @@ struct HomeView: View {
                     ContentUnavailableView {
                         Label("No triggers yet", systemImage: "dot.radiowaves.left.and.right")
                     } description: {
-                        Text("Create a Trigger, write its link to an NFC tag, and everyone in your household gets notified when it’s tapped.")
+                        Text("Create a Trigger, write its link to an NFC tag, and everyone in your group gets notified when it’s tapped.")
                     } actions: {
                         Button("Create a Trigger") { showingCreate = true }
                             .buttonStyle(.borderedProminent)
@@ -29,7 +29,7 @@ struct HomeView: View {
                 } else {
                     List(triggers) { trigger in
                         NavigationLink {
-                            TriggerDetailView(trigger: trigger, familyId: familyId)
+                            TriggerDetailView(trigger: trigger, groupId: groupId)
                         } label: {
                             TriggerRow(
                                 trigger: trigger,
@@ -54,12 +54,12 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showingCreate) {
-                CreateTriggerView(familyId: familyId)
+                CreateTriggerView(groupId: groupId)
             }
             .alert("Notifications", isPresented: $showingNotifExplainer) {
                 Button("Continue") { requestNotificationPermission() }
             } message: {
-                Text("Apprch needs permission to notify your household.")
+                Text("Apprch needs permission to notify your group.")
             }
             .onAppear {
                 askForNotificationsIfNeeded()
@@ -73,7 +73,7 @@ struct HomeView: View {
         listener?.remove()
         listener = Firestore.firestore()
             .collection("triggers")
-            .whereField("familyId", isEqualTo: familyId)
+            .whereField("groupId", isEqualTo: groupId)
             .addSnapshotListener { snapshot, _ in
                 let docs = snapshot?.documents.compactMap { doc -> Trigger? in
                     try? doc.data(as: Trigger.self)

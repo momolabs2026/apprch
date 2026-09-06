@@ -4,7 +4,7 @@ import FirebaseFunctions
 
 struct ConfirmEventView: View {
     let triggerId: String
-    let familyId: String
+    let groupId: String
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authVM: AuthViewModel
@@ -24,7 +24,7 @@ struct ConfirmEventView: View {
                     ContentUnavailableView(
                         "This trigger isn’t available",
                         systemImage: "link.badge.plus",
-                        description: Text("It may belong to a different household, or it was deleted.")
+                        description: Text("It may belong to a different group, or it was deleted.")
                     )
                 } else {
                     ProgressView()
@@ -54,7 +54,7 @@ struct ConfirmEventView: View {
             Text(trigger.name)
                 .font(.title2.bold())
                 .multilineTextAlignment(.center)
-            Text("Send a notification to your household?")
+            Text("Send a notification to your group?")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -104,7 +104,7 @@ struct ConfirmEventView: View {
                 loadFailed = true
                 return
             }
-            if loaded.familyId != familyId {
+            if loaded.groupId != groupId {
                 loadFailed = true
                 return
             }
@@ -120,7 +120,7 @@ struct ConfirmEventView: View {
         Task {
             do {
                 let fn = Functions.functions().httpsCallable("logEvent")
-                _ = try await fn.call(["triggerId": triggerId, "familyId": familyId])
+                _ = try await fn.call(["triggerId": triggerId, "groupId": groupId])
                 didSend = true
             } catch {
                 errorMessage = error.localizedDescription

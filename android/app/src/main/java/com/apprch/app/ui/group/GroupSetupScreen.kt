@@ -1,4 +1,4 @@
-package com.apprch.app.ui.family
+package com.apprch.app.ui.group
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,12 +35,12 @@ import kotlinx.coroutines.tasks.await
 private enum class Mode { CHOOSE, CREATE, JOIN }
 
 @Composable
-fun FamilySetupScreen(onSignOut: () -> Unit) {
+fun GroupSetupScreen(onSignOut: () -> Unit) {
     val functions = remember { FirebaseFunctions.getInstance() }
     val scope = rememberCoroutineScope()
 
     var mode by remember { mutableStateOf(Mode.CHOOSE) }
-    var familyName by remember { mutableStateOf("") }
+    var groupName by remember { mutableStateOf("") }
     var inviteCode by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -54,7 +54,7 @@ fun FamilySetupScreen(onSignOut: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Set up your family", style = MaterialTheme.typography.headlineMedium)
+        Text("Set up your group", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(32.dp))
 
         when (mode) {
@@ -62,7 +62,7 @@ fun FamilySetupScreen(onSignOut: () -> Unit) {
                 Button(
                     onClick = { mode = Mode.CREATE },
                     modifier = Modifier.fillMaxWidth()
-                ) { Text("Create a new family") }
+                ) { Text("Create a new group") }
                 Spacer(Modifier.height(12.dp))
                 OutlinedButton(
                     onClick = { mode = Mode.JOIN },
@@ -72,21 +72,21 @@ fun FamilySetupScreen(onSignOut: () -> Unit) {
 
             Mode.CREATE -> {
                 OutlinedTextField(
-                    value = familyName,
-                    onValueChange = { familyName = it },
-                    label = { Text("Family name (e.g. The Delfinos)") },
+                    value = groupName,
+                    onValueChange = { groupName = it },
+                    label = { Text("Group name (e.g. The Delfinos)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 ErrorLabel(errorMessage)
                 Spacer(Modifier.height(16.dp))
-                SubmitButton("Create family", isLoading, enabled = familyName.isNotBlank()) {
+                SubmitButton("Create group", isLoading, enabled = groupName.isNotBlank()) {
                     scope.launch {
                         isLoading = true
                         errorMessage = null
                         try {
-                            functions.getHttpsCallable("createFamily")
-                                .call(mapOf("name" to familyName.trim()))
+                            functions.getHttpsCallable("createGroup")
+                                .call(mapOf("name" to groupName.trim()))
                                 .await()
                         } catch (e: Exception) {
                             errorMessage = e.localizedMessage
@@ -107,12 +107,12 @@ fun FamilySetupScreen(onSignOut: () -> Unit) {
                 )
                 ErrorLabel(errorMessage)
                 Spacer(Modifier.height(16.dp))
-                SubmitButton("Join family", isLoading, enabled = inviteCode.isNotBlank()) {
+                SubmitButton("Join group", isLoading, enabled = inviteCode.isNotBlank()) {
                     scope.launch {
                         isLoading = true
                         errorMessage = null
                         try {
-                            functions.getHttpsCallable("joinFamily")
+                            functions.getHttpsCallable("joinGroup")
                                 .call(mapOf("inviteCode" to inviteCode.trim()))
                                 .await()
                         } catch (e: Exception) {

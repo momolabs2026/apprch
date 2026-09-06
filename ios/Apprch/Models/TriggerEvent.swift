@@ -3,7 +3,7 @@ import FirebaseFirestore
 
 struct TriggerEvent: Identifiable, Codable {
     @DocumentID var id: String?
-    var familyId: String
+    var groupId: String
     var triggerId: String
     var triggeredByUid: String
     var timestamp: Timestamp?

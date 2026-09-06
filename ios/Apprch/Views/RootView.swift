@@ -13,13 +13,13 @@ struct RootView: View {
             case .unauthenticated:
                 AuthView()
 
-            case .needsFamily:
-                FamilySetupView()
+            case .needsGroup:
+                GroupSetupView()
 
-            case .ready(let familyId):
-                HomeView(familyId: familyId)
+            case .ready(let groupId):
+                HomeView(groupId: groupId)
                     .sheet(item: $authVM.pendingTrigger) { pending in
-                        ConfirmEventView(triggerId: pending.id, familyId: familyId)
+                        ConfirmEventView(triggerId: pending.id, groupId: groupId)
                     }
                     .alert(
                         "This trigger isn’t available",

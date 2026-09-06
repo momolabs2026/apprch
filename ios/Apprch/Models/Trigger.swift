@@ -24,7 +24,7 @@ enum VisualizationType: String, Codable, CaseIterable, Identifiable {
 
 struct Trigger: Identifiable, Codable {
     @DocumentID var id: String?
-    var familyId: String
+    var groupId: String
     var name: String
     var icon: String
     var notificationMessage: String

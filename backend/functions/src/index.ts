@@ -13,22 +13,22 @@ function randomInviteCode(): string {
   ).join("");
 }
 
-export const createFamily = functions.https.onCall(async (data, context) => {
+export const createGroup = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
   }
 
   const name = data?.name as string | undefined;
   if (!name?.trim()) {
-    throw new functions.https.HttpsError("invalid-argument", "Household name is required.");
+    throw new functions.https.HttpsError("invalid-argument", "Group name is required.");
   }
 
   const uid = context.auth.uid;
   const inviteCode = randomInviteCode();
 
-  const familyRef = db.collection("families").doc();
+  const groupRef = db.collection("groups").doc();
   await db.runTransaction(async (tx) => {
-    tx.set(familyRef, {
+    tx.set(groupRef, {
       name: name.trim(),
       inviteCode,
       memberUids: [uid],
@@ -36,15 +36,15 @@ export const createFamily = functions.https.onCall(async (data, context) => {
     });
     tx.set(
       db.collection("users").doc(uid),
-      { familyId: familyRef.id, displayName: context.auth!.token.name ?? "" },
+      { groupId: groupRef.id, displayName: context.auth!.token.name ?? "" },
       { merge: true }
     );
   });
 
-  return { familyId: familyRef.id, inviteCode };
+  return { groupId: groupRef.id, inviteCode };
 });
 
-export const joinFamily = functions.https.onCall(async (data, context) => {
+export const joinGroup = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
   }
@@ -57,7 +57,7 @@ export const joinFamily = functions.https.onCall(async (data, context) => {
   const uid = context.auth.uid;
 
   const snap = await db
-    .collection("families")
+    .collection("groups")
     .where("inviteCode", "==", inviteCode.trim().toUpperCase())
     .limit(1)
     .get();
@@ -66,21 +66,21 @@ export const joinFamily = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("not-found", "Invalid invite code.");
   }
 
-  const familyDoc = snap.docs[0];
-  const familyId = familyDoc.id;
+  const groupDoc = snap.docs[0];
+  const groupId = groupDoc.id;
 
   await db.runTransaction(async (tx) => {
-    tx.update(familyDoc.ref, {
+    tx.update(groupDoc.ref, {
       memberUids: admin.firestore.FieldValue.arrayUnion(uid),
     });
     tx.set(
       db.collection("users").doc(uid),
-      { familyId, displayName: context.auth!.token.name ?? "" },
+      { groupId, displayName: context.auth!.token.name ?? "" },
       { merge: true }
     );
   });
 
-  return { familyId };
+  return { groupId };
 });
 
 export const logEvent = functions.https.onCall(async (data, context) => {
@@ -89,11 +89,11 @@ export const logEvent = functions.https.onCall(async (data, context) => {
   }
 
   const triggerId = data?.triggerId as string | undefined;
-  const familyId = data?.familyId as string | undefined;
-  if (!familyId || !triggerId) {
+  const groupId = data?.groupId as string | undefined;
+  if (!groupId || !triggerId) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "familyId and triggerId are required."
+      "groupId and triggerId are required."
     );
   }
 
@@ -105,23 +105,23 @@ export const logEvent = functions.https.onCall(async (data, context) => {
   }
 
   const trigger = triggerDoc.data() ?? {};
-  if (trigger.familyId !== familyId) {
+  if (trigger.groupId !== groupId) {
     throw new functions.https.HttpsError(
       "permission-denied",
-      "This trigger is not part of your household."
+      "This trigger is not part of your group."
     );
   }
 
-  const familyDoc = await db.collection("families").doc(familyId).get();
-  if (!familyDoc.exists) {
-    throw new functions.https.HttpsError("not-found", "Household not found.");
+  const groupDoc = await db.collection("groups").doc(groupId).get();
+  if (!groupDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Group not found.");
   }
 
-  const memberUids: string[] = familyDoc.data()?.memberUids ?? [];
+  const memberUids: string[] = groupDoc.data()?.memberUids ?? [];
   if (!memberUids.includes(uid)) {
     throw new functions.https.HttpsError(
       "permission-denied",
-      "You are not a member of this household."
+      "You are not a member of this group."
     );
   }
 
@@ -132,7 +132,7 @@ export const logEvent = functions.https.onCall(async (data, context) => {
 
   await Promise.all([
     db.collection("events").add({
-      familyId,
+      groupId,
       triggerId,
       triggeredByUid: uid,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),

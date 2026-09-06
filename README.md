@@ -26,8 +26,8 @@ apprch/
 ### Backend (Firebase)
 
 - **Authentication** — email/password sign-in
-- **Firestore** — households (`families`), users, `triggers`, and `events`
-- **Cloud Functions** — `createFamily`, `joinFamily`, `logEvent` (looks up the Trigger, writes an event, fans out FCM)
+- **Firestore** — groups, users, `triggers`, and `events`
+- **Cloud Functions** — `createGroup`, `joinGroup`, `logEvent` (looks up the Trigger, writes an event, fans out FCM)
 - **Hosting** — Universal Link / App Link verification at `https://apprch.web.app/t/{triggerId}`
 
 ### iOS
@@ -45,10 +45,10 @@ SwiftUI: sign in → create or join a household → home list of Triggers. Unive
 ### Data model
 
 ```
-families/{familyId}     name, inviteCode, memberUids[]
-users/{uid}             displayName, familyId, fcmTokens[]
-triggers/{triggerId}    familyId, name, icon, notificationMessage, visualizationType, createdByUid, createdAt, lastTriggeredAt, lastTriggeredByUid, eventCount
-events/{eventId}        familyId, triggerId, triggeredByUid, timestamp
+groups/{groupId}        name, inviteCode, memberUids[]
+users/{uid}             displayName, groupId, fcmTokens[]
+triggers/{triggerId}    groupId, name, icon, notificationMessage, visualizationType, createdByUid, createdAt, lastTriggeredAt, lastTriggeredByUid, eventCount
+events/{eventId}        groupId, triggerId, triggeredByUid, timestamp
 ```
 
 Visualization types in v1: **Log** and **Counter**.

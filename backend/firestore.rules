@@ -10,35 +10,35 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function sameHousehold(familyId) {
-      return signedIn() && myUserDoc().familyId == familyId;
+    function sameGroup(groupId) {
+      return signedIn() && myUserDoc().groupId == groupId;
     }
 
     match /users/{uid} {
       allow read: if signedIn() && (
         request.auth.uid == uid ||
-        ('familyId' in resource.data
-          && myUserDoc().familyId == resource.data.familyId)
+        ('groupId' in resource.data
+          && myUserDoc().groupId == resource.data.groupId)
       );
       allow write: if signedIn() && request.auth.uid == uid;
     }
 
-    match /families/{familyId} {
+    match /groups/{groupId} {
       allow read: if signedIn()
         && request.auth.uid in resource.data.memberUids;
       allow write: if false;
     }
 
     match /triggers/{triggerId} {
-      allow read: if sameHousehold(resource.data.familyId);
+      allow read: if sameGroup(resource.data.groupId);
       allow create: if signedIn()
-        && request.resource.data.familyId == myUserDoc().familyId
+        && request.resource.data.groupId == myUserDoc().groupId
         && request.resource.data.createdByUid == request.auth.uid;
-      allow update, delete: if sameHousehold(resource.data.familyId);
+      allow update, delete: if sameGroup(resource.data.groupId);
     }
 
     match /events/{eventId} {
-      allow read: if sameHousehold(resource.data.familyId);
+      allow read: if sameGroup(resource.data.groupId);
       allow write: if false;
     }
   }

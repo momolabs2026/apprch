@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 @Composable
-fun ConfirmEventDialog(eventType: String, familyId: String, onDismiss: () -> Unit) {
+fun ConfirmEventDialog(eventType: String, groupId: String, onDismiss: () -> Unit) {
     val functions = remember { FirebaseFunctions.getInstance() }
     val scope = rememberCoroutineScope()
 
@@ -51,7 +51,7 @@ fun ConfirmEventDialog(eventType: String, familyId: String, onDismiss: () -> Uni
                 if (didSend) {
                     Text("Notification sent!", style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    Text("Send a push notification to your family?")
+                    Text("Send a push notification to your group?")
                     errorMessage?.let {
                         Spacer(Modifier.height(8.dp))
                         Text(
@@ -72,7 +72,7 @@ fun ConfirmEventDialog(eventType: String, familyId: String, onDismiss: () -> Uni
                             errorMessage = null
                             try {
                                 functions.getHttpsCallable("logEvent")
-                                    .call(mapOf("type" to eventType, "familyId" to familyId))
+                                    .call(mapOf("type" to eventType, "groupId" to groupId))
                                     .await()
                                 didSend = true
                             } catch (e: Exception) {

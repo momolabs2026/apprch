@@ -1,11 +1,11 @@
 import SwiftUI
 import FirebaseFunctions
 
-struct FamilySetupView: View {
+struct GroupSetupView: View {
     @EnvironmentObject var authVM: AuthViewModel
 
     @State private var mode: Mode = .choose
-    @State private var familyName = ""
+    @State private var groupName = ""
     @State private var inviteCode = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -17,7 +17,7 @@ struct FamilySetupView: View {
             VStack(spacing: 32) {
                 Spacer()
                 VStack(spacing: 8) {
-                    Text("Set up your household")
+                    Text("Set up your group")
                         .font(.title.bold())
                     Text("Triggers are shared with everyone you invite.")
                         .font(.subheadline)
@@ -28,7 +28,7 @@ struct FamilySetupView: View {
                 switch mode {
                 case .choose:
                     VStack(spacing: 16) {
-                        Button("Create a household") {
+                        Button("Create a group") {
                             withAnimation { mode = .create }
                         }
                         .buttonStyle(.borderedProminent)
@@ -44,11 +44,11 @@ struct FamilySetupView: View {
 
                 case .create:
                     VStack(spacing: 16) {
-                        TextField("Household name (e.g. The Delfinos)", text: $familyName)
+                        TextField("Group name (e.g. The Delfinos)", text: $groupName)
                             .textFieldStyle(.roundedBorder)
 
                         errorLabel
-                        submitButton("Create household") { await createFamily() }
+                        submitButton("Create group") { await createGroup() }
                         backButton
                     }
                     .padding(.horizontal)
@@ -61,7 +61,7 @@ struct FamilySetupView: View {
                             .textInputAutocapitalization(.characters)
 
                         errorLabel
-                        submitButton("Join household") { await joinFamily() }
+                        submitButton("Join group") { await joinGroup() }
                         backButton
                     }
                     .padding(.horizontal)
@@ -103,25 +103,25 @@ struct FamilySetupView: View {
         .disabled(isLoading)
     }
 
-    private func createFamily() async {
-        guard !familyName.isEmpty else { return }
+    private func createGroup() async {
+        guard !groupName.isEmpty else { return }
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("createFamily")
-            _ = try await fn.call(["name": familyName])
+            let fn = Functions.functions().httpsCallable("createGroup")
+            _ = try await fn.call(["name": groupName])
         } catch {
             errorMessage = error.localizedDescription
         }
         isLoading = false
     }
 
-    private func joinFamily() async {
+    private func joinGroup() async {
         guard !inviteCode.isEmpty else { return }
         isLoading = true
         errorMessage = nil
         do {
-            let fn = Functions.functions().httpsCallable("joinFamily")
+            let fn = Functions.functions().httpsCallable("joinGroup")
             _ = try await fn.call(["inviteCode": inviteCode.uppercased()])
         } catch {
             errorMessage = error.localizedDescription

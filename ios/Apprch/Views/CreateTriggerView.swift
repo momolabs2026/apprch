@@ -4,7 +4,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct CreateTriggerView: View {
-    let familyId: String
+    let groupId: String
 
     @Environment(\.dismiss) private var dismiss
 
@@ -64,7 +64,7 @@ struct CreateTriggerView: View {
             }
 
             Section("Notification message") {
-                TextField("What should the household see?", text: $notificationMessage, axis: .vertical)
+                TextField("What should the group see?", text: $notificationMessage, axis: .vertical)
                     .lineLimit(2...4)
                     .onChange(of: notificationMessage) { _, _ in
                         messageEdited = true
@@ -163,7 +163,7 @@ struct CreateTriggerView: View {
         do {
             let ref = Firestore.firestore().collection("triggers").document()
             try await ref.setData([
-                "familyId": familyId,
+                "groupId": groupId,
                 "name": name.trimmingCharacters(in: .whitespacesAndNewlines),
                 "icon": icon,
                 "notificationMessage": notificationMessage.trimmingCharacters(in: .whitespacesAndNewlines),

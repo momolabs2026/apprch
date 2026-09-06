@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 sealed class AppState {
     data object Loading : AppState()
     data object Unauthenticated : AppState()
-    data object NeedsFamily : AppState()
-    data class Ready(val familyId: String) : AppState()
+    data object NeedsGroup : AppState()
+    data class Ready(val groupId: String) : AppState()
 }
 
 class AppViewModel : ViewModel() {
@@ -67,11 +67,11 @@ class AppViewModel : ViewModel() {
         userListener?.remove()
         userListener = db.collection("users").document(uid)
             .addSnapshotListener { snapshot, _ ->
-                val familyId = snapshot?.getString("familyId")
-                _state.value = if (familyId != null) {
-                    AppState.Ready(familyId)
+                val groupId = snapshot?.getString("groupId")
+                _state.value = if (groupId != null) {
+                    AppState.Ready(groupId)
                 } else {
-                    AppState.NeedsFamily
+                    AppState.NeedsGroup
                 }
             }
     }

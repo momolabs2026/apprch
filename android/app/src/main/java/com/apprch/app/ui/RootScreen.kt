@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.apprch.app.ui.auth.AuthScreen
 import com.apprch.app.ui.confirm.ConfirmEventDialog
-import com.apprch.app.ui.family.FamilySetupScreen
+import com.apprch.app.ui.group.GroupSetupScreen
 import com.apprch.app.ui.home.HomeScreen
 
 @Composable
@@ -20,18 +20,18 @@ fun RootScreen(state: AppState, viewModel: AppViewModel) {
             CircularProgressIndicator()
         }
         is AppState.Unauthenticated -> AuthScreen()
-        is AppState.NeedsFamily -> FamilySetupScreen(onSignOut = viewModel::signOut)
+        is AppState.NeedsGroup -> GroupSetupScreen(onSignOut = viewModel::signOut)
         is AppState.Ready -> {
             val pendingEvent by viewModel.pendingEvent.collectAsState()
             HomeScreen(
-                familyId = state.familyId,
+                groupId = state.groupId,
                 onManualLog = { viewModel.setPendingEvent("update") },
                 onSignOut = viewModel::signOut
             )
             pendingEvent?.let { eventType ->
                 ConfirmEventDialog(
                     eventType = eventType,
-                    familyId = state.familyId,
+                    groupId = state.groupId,
                     onDismiss = viewModel::clearPendingEvent
                 )
             }

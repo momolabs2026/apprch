@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import android.content.pm.PackageManager
-import com.apprch.app.model.FamilyEvent
+import com.apprch.app.model.GroupEvent
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
@@ -47,13 +47,13 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    familyId: String,
+    groupId: String,
     onManualLog: () -> Unit,
     onSignOut: () -> Unit
 ) {
     val db = remember { FirebaseFirestore.getInstance() }
     val context = LocalContext.current
-    var events by remember { mutableStateOf<List<FamilyEvent>>(emptyList()) }
+    var events by remember { mutableStateOf<List<GroupEvent>>(emptyList()) }
     var authorNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -72,15 +72,15 @@ fun HomeScreen(
         }
     }
 
-    DisposableEffect(familyId) {
+    DisposableEffect(groupId) {
         val registration = db.collection("events")
-            .whereEqualTo("familyId", familyId)
+            .whereEqualTo("groupId", groupId)
             .orderBy("timestamp", Query.Direction.DESCENDING)
             .limit(50)
             .addSnapshotListener { snapshot, _ ->
                 events = snapshot?.documents?.mapNotNull { doc ->
                     val ts = doc.getTimestamp("timestamp") ?: return@mapNotNull null
-                    FamilyEvent(
+                    GroupEvent(
                         id = doc.id,
                         type = doc.getString("type") ?: return@mapNotNull null,
                         triggeredByUid = doc.getString("triggeredByUid") ?: return@mapNotNull null,
@@ -149,7 +149,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun EventRow(event: FamilyEvent, authorName: String?) {
+private fun EventRow(event: GroupEvent, authorName: String?) {
     val formatter = remember { SimpleDateFormat("MMM d 'at' h:mm a", Locale.getDefault()) }
     ListItem(
         headlineContent = { Text(event.displayName) },

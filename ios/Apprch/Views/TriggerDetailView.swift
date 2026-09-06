@@ -3,7 +3,7 @@ import UIKit
 import FirebaseFirestore
 
 struct TriggerDetailView: View {
-    let familyId: String
+    let groupId: String
     @State private var trigger: Trigger
     @State private var events: [TriggerEvent] = []
     @State private var userNames: [String: String] = [:]
@@ -12,8 +12,8 @@ struct TriggerDetailView: View {
     @State private var copied = false
     @EnvironmentObject var authVM: AuthViewModel
 
-    init(trigger: Trigger, familyId: String) {
-        self.familyId = familyId
+    init(trigger: Trigger, groupId: String) {
+        self.groupId = groupId
         _trigger = State(initialValue: trigger)
     }
 

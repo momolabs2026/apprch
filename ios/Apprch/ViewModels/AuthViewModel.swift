@@ -13,8 +13,8 @@ final class AuthViewModel: ObservableObject {
     enum AppState {
         case loading
         case unauthenticated
-        case needsFamily
-        case ready(familyId: String)
+        case needsGroup
+        case ready(groupId: String)
     }
 
     @Published var state: AppState = .loading
@@ -89,8 +89,8 @@ final class AuthViewModel: ObservableObject {
             .collection("users").document(uid)
             .addSnapshotListener { [weak self] snapshot, _ in
                 Task { @MainActor in
-                    let familyId = snapshot?.data()?["familyId"] as? String
-                    self?.state = familyId.map { .ready(familyId: $0) } ?? .needsFamily
+                    let groupId = snapshot?.data()?["groupId"] as? String
+                    self?.state = groupId.map { .ready(groupId: $0) } ?? .needsGroup
                 }
             }
     }

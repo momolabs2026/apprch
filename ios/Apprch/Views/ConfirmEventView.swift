@@ -1,11 +1,9 @@
 import SwiftUI
+import UIKit
 import FirebaseFirestore
-import FirebaseFunctions
 
 struct ConfirmEventView: View {
     let triggerId: String
-    let groupId: String
-    let solo: Bool
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authVM: AuthViewModel
@@ -14,22 +12,20 @@ struct ConfirmEventView: View {
     @State private var loadFailed = false
     @State private var isSending = false
     @State private var didSend = false
+    @State private var didAttempt = false
     @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
             Group {
-                if let trigger {
-                    confirmBody(trigger)
-                } else if loadFailed {
+                if loadFailed {
                     ContentUnavailableView(
                         "This trigger isn’t available",
                         systemImage: "link.badge.plus",
-                        description: Text("It may belong to a different group, or it was deleted.")
+                        description: Text("It may belong to a different space, or it was deleted.")
                     )
                 } else {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    statusBody
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -39,60 +35,57 @@ struct ConfirmEventView: View {
                 }
             }
         }
-        .task { await loadTrigger() }
+        .interactiveDismissDisabled(isSending)
+        .task { await logIfNeeded() }
         .onChange(of: didSend) { _, sent in
             if sent {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { dismiss() }
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
             }
         }
     }
 
-    private func confirmBody(_ trigger: Trigger) -> some View {
-        VStack(spacing: 28) {
+    private var statusBody: some View {
+        VStack(spacing: 20) {
             Spacer()
-            Text(trigger.icon)
-                .font(.system(size: 72))
-            Text(trigger.name)
-                .font(.title2.bold())
-                .multilineTextAlignment(.center)
-            Text(solo ? "Log this as a reminder for yourself?" : "Send a notification to your group?")
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            if let trigger {
+                Text(trigger.icon)
+                    .font(.system(size: 72))
+                Text(trigger.name)
+                    .font(.title2.bold())
+                    .multilineTextAlignment(.center)
+            }
 
             if didSend {
-                Label(solo ? "Logged" : "Notification sent", systemImage: "checkmark.circle.fill")
+                Label("Logged", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .font(.headline)
-            } else {
-                VStack(spacing: 12) {
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-
-                    Button {
-                        send()
-                    } label: {
-                        if isSending {
-                            ProgressView().frame(maxWidth: .infinity)
-                        } else {
-                            Text(solo ? "Log it" : "Send notification").frame(maxWidth: .infinity)
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isSending)
-
-                    Button("Cancel") { dismiss() }
-                        .buttonStyle(.bordered)
-                        .frame(maxWidth: .infinity)
+            } else if let errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.red)
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                Button("Try again") {
+                    Task { await send() }
                 }
-                .padding(.horizontal)
+                .buttonStyle(.borderedProminent)
+            } else {
+                ProgressView()
+                Text("Logging…")
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
         }
         .padding()
+    }
+
+    private func logIfNeeded() async {
+        await loadTrigger()
+        guard !didAttempt, trigger != nil else { return }
+        didAttempt = true
+        await send()
     }
 
     private func loadTrigger() async {
@@ -105,28 +98,23 @@ struct ConfirmEventView: View {
                 loadFailed = true
                 return
             }
-            if loaded.groupId != groupId {
-                loadFailed = true
-                return
-            }
             trigger = loaded
         } catch {
             loadFailed = true
         }
     }
 
-    private func send() {
+    private func send() async {
+        guard let groupId = trigger?.groupId else { return }
         isSending = true
         errorMessage = nil
-        Task {
-            do {
-                let fn = Functions.functions().httpsCallable("logEvent")
-                _ = try await fn.call(["triggerId": triggerId, "groupId": groupId])
-                didSend = true
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-            isSending = false
+        do {
+            try await EventStore.log(triggerId: triggerId, groupId: groupId)
+            await authVM.selectSpace(groupId)
+            didSend = true
+        } catch {
+            errorMessage = EventStore.userFacingMessage(for: error)
         }
+        isSending = false
     }
 }

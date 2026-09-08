@@ -3,85 +3,123 @@ import UIKit
 import FirebaseFirestore
 
 struct TriggerDetailView: View {
-    let groupId: String
+    let spaces: [Space]
     @State private var trigger: Trigger
     @State private var events: [TriggerEvent] = []
     @State private var userNames: [String: String] = [:]
     @State private var eventsListener: ListenerRegistration?
     @State private var triggerListener: ListenerRegistration?
-    @State private var copied = false
+    @State private var showingMove = false
+    @State private var showingEdit = false
+    @State private var historyError: String?
     @EnvironmentObject var authVM: AuthViewModel
 
-    init(trigger: Trigger, groupId: String) {
-        self.groupId = groupId
+    init(trigger: Trigger, spaces: [Space]) {
+        self.spaces = spaces
         _trigger = State(initialValue: trigger)
+    }
+
+    private var todayCount: Int {
+        events.filter { Calendar.current.isDateInToday($0.date) }.count
+    }
+
+    private var todaySummary: String {
+        switch todayCount {
+        case 0: return "Not yet"
+        case 1: return "Done once"
+        default: return "Done \(todayCount) times"
+        }
     }
 
     var body: some View {
         List {
             Section {
-                HStack(spacing: 12) {
-                    Text(trigger.icon)
-                        .font(.largeTitle)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(trigger.name)
-                            .font(.title3.bold())
-                        Text(trigger.visualization.title)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                HStack(alignment: .firstTextBaseline) {
+                    Text("Today")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(todaySummary)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(todayCount == 0 ? Color.secondary : trigger.accent)
                 }
                 if trigger.visualization == .counter {
-                    LabeledContent("Total") {
+                    HStack {
+                        Text("Total")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
                         Text("\(trigger.eventCount ?? events.count)")
-                            .font(.title3.bold())
+                            .font(.subheadline.weight(.semibold))
                     }
-                }
-            }
-
-            Section("NFC tag") {
-                Text(trigger.tagURLString)
-                    .font(.footnote.monospaced())
-                    .textSelection(.enabled)
-                NFCWriteButton(urlString: trigger.tagURLString)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                Button {
-                    UIPasteboard.general.string = trigger.tagURLString
-                    copied = true
-                } label: {
-                    Label(copied ? "Copied" : "Copy link", systemImage: copied ? "checkmark" : "doc.on.doc")
                 }
             }
 
             Section("History") {
-                if events.isEmpty {
-                    Text("No events yet. Tap the tag or log one below.")
-                        .foregroundStyle(.secondary)
+                if let historyError {
+                    Text(historyError)
+                        .foregroundStyle(.red)
                 } else {
-                    ForEach(events) { event in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(userNames[event.triggeredByUid] ?? "Someone")
-                            Text(event.date, style: .relative)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                    ContributionGraphView(events: events, accent: trigger.accent)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                    if events.isEmpty {
+                        Text("No activity yet. Check the circle on a day you do this.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(Array(events.prefix(8))) { event in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(userNames[event.triggeredByUid] ?? "Someone")
+                                Text(event.date.apprchRelativeString)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 2)
                         }
-                        .padding(.vertical, 2)
                     }
                 }
             }
         }
-        .navigationTitle(trigger.name)
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    Text(trigger.icon)
+                    Text(trigger.name)
+                        .font(.headline)
+                        .lineLimit(1)
+                }
+                .accessibilityElement(children: .combine)
+            }
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Log") {
-                    if let id = trigger.id {
-                        authVM.presentTrigger(id: id)
-                    }
+                Button {
+                    showingMove = true
+                } label: {
+                    Label("Move", systemImage: "square.and.arrow.up")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showingEdit = true
+                } label: {
+                    Label("Edit", systemImage: "pencil")
                 }
             }
         }
+        .sheet(isPresented: $showingMove) {
+            MoveTriggerView(trigger: trigger, spaces: spaces)
+        }
+        .sheet(isPresented: $showingEdit) {
+            CreateTriggerView(
+                groupId: trigger.groupId,
+                solo: spaces.first(where: { $0.id == trigger.groupId })?.solo ?? false,
+                editing: trigger
+            )
+        }
         .onAppear { startListening() }
+        .onChange(of: trigger.groupId) { _, _ in
+            startListening()
+        }
         .onDisappear {
             eventsListener?.remove()
             triggerListener?.remove()
@@ -91,6 +129,7 @@ struct TriggerDetailView: View {
     private func startListening() {
         guard let triggerId = trigger.id else { return }
 
+        triggerListener?.remove()
         triggerListener = Firestore.firestore()
             .collection("triggers").document(triggerId)
             .addSnapshotListener { snapshot, _ in
@@ -99,14 +138,21 @@ struct TriggerDetailView: View {
                 }
             }
 
+        eventsListener?.remove()
         eventsListener = Firestore.firestore()
             .collection("events")
+            .whereField("groupId", isEqualTo: trigger.groupId)
             .whereField("triggerId", isEqualTo: triggerId)
-            .limit(to: 80)
-            .addSnapshotListener { snapshot, _ in
+            .limit(to: 400)
+            .addSnapshotListener { snapshot, error in
+                if let error {
+                    historyError = error.localizedDescription
+                    return
+                }
+                historyError = nil
                 let newEvents = (snapshot?.documents.compactMap { try? $0.data(as: TriggerEvent.self) } ?? [])
                     .sorted { $0.date > $1.date }
-                events = Array(newEvents.prefix(50))
+                events = newEvents
                 loadMissingNames(from: newEvents)
             }
     }

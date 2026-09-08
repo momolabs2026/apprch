@@ -13,6 +13,17 @@ Every PR requires a review from `@momolabs2026` (`CODEOWNERS`). Direct pushes to
 
 If you are inviting a collaborator: give them **Read** access so they fork and open a PR. Only `@momolabs2026` should merge.
 
+## Good first issues
+
+The iOS MVP is usable. These are the next useful slices:
+
+- Android NFC write
+- Push notification when another member logs a Trigger
+- Leave a group, and remove a member
+- Universal Links after Apple Developer enrollment
+- Tests around EventStore / GroupStore
+- Widgets or a streak visualization on Trigger detail
+
 ## Project structure
 
 ```

@@ -16,10 +16,10 @@ struct RootView: View {
             case .needsGroup:
                 GroupSetupView()
 
-            case .ready(let groupId, let solo):
-                HomeView(groupId: groupId, solo: solo)
+            case .ready(let active, let spaces):
+                HomeView(active: active, spaces: spaces)
                     .sheet(item: $authVM.pendingTrigger) { pending in
-                        ConfirmEventView(triggerId: pending.id, groupId: groupId, solo: solo)
+                        ConfirmEventView(triggerId: pending.id)
                     }
                     .alert(
                         "This trigger isn’t available",

@@ -9,6 +9,14 @@
       ]
     },
     {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "groupId", "order": "ASCENDING" },
+        { "fieldPath": "triggerId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "triggers",
       "queryScope": "COLLECTION",
       "fields": [

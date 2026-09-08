@@ -12,8 +12,20 @@ final class NFCTagController: NSObject, ObservableObject {
 
     @Published var status: Status = .idle
 
+    static var unavailableMessage: String {
+        #if PERSONAL_TEAM
+        "NFC needs a paid Apple Developer team. This Debug build can run on your iPhone, but it can’t write or read tags yet."
+        #else
+        "NFC needs a physical iPhone, not the Simulator."
+        #endif
+    }
+
     static var isAvailable: Bool {
+        #if PERSONAL_TEAM
+        false
+        #else
         NFCNDEFReaderSession.readingAvailable
+        #endif
     }
 
     private var session: NFCNDEFReaderSession?
@@ -22,7 +34,7 @@ final class NFCTagController: NSObject, ObservableObject {
 
     func write(url: URL) {
         guard Self.isAvailable else {
-            status = .failed("NFC needs a physical iPhone.")
+            status = .failed(Self.unavailableMessage)
             return
         }
         urlToWrite = url
@@ -33,7 +45,7 @@ final class NFCTagController: NSObject, ObservableObject {
 
     func read(onURL: @escaping (URL) -> Void) {
         guard Self.isAvailable else {
-            status = .failed("NFC needs a physical iPhone.")
+            status = .failed(Self.unavailableMessage)
             return
         }
         urlToWrite = nil

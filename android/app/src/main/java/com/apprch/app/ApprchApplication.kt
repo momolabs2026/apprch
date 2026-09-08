@@ -9,9 +9,15 @@ import com.google.firebase.FirebaseApp
 class ApprchApplication : Application() {
     override fun onCreate() {
         super.onCreate()
+        appContext = this
         FirebaseApp.initializeApp(this)
         AppearancePrefs.load(this)
         val manager = getSystemService(NotificationManager::class.java)
         ApprchMessagingService.createChannel(manager)
+    }
+
+    companion object {
+        lateinit var appContext: ApprchApplication
+            private set
     }
 }

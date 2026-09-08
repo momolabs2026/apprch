@@ -18,6 +18,7 @@ struct ApprchApp: App {
                     authVM.handleIncomingURL(url)
                 }
         }
+        .defaultSize(width: 1100, height: 760)
     }
 }
 

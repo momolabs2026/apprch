@@ -1,0 +1,29 @@
+name: Bug
+description: Something in Apprch is broken
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - iOS
+        - Android
+        - Mac (Designed for iPad)
+        - Backend / Firebase
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      placeholder: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Extra context
+      placeholder: Screenshots, device, OS version. Don’t paste secrets or Firebase config files.

@@ -47,6 +47,27 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".widget.HeatmapWidgetConfigActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Apprch">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <receiver
+            android:name=".widget.HeatmapWidgetReceiver"
+            android:exported="true"
+            android:label="@string/heatmap_widget_preview_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/heatmap_widget_info" />
+        </receiver>
+
         <service
             android:name=".messaging.ApprchMessagingService"
             android:exported="false">

@@ -36,6 +36,7 @@ final class AuthViewModel: ObservableObject {
                 } else {
                     self?.userListener?.remove()
                     self?.state = .unauthenticated
+                    WidgetSnapshotStore.clear()
                 }
             }
         }
@@ -66,6 +67,7 @@ final class AuthViewModel: ObservableObject {
         profileName = ""
         profileEmail = ""
         profilePhotoBase64 = nil
+        WidgetSnapshotStore.clear()
     }
 
     func updateDisplayName(_ name: String) async throws {

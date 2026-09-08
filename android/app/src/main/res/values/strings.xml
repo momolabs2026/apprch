@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Apprch</string>
+    <string name="heatmap_widget_description">Keep a Trigger’s heatmap on your Home Screen.</string>
+    <string name="heatmap_widget_preview_title">Trigger heatmap</string>
 </resources>

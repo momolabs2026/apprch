@@ -13,5 +13,9 @@
 		<string>NDEF</string>
 		<string>TAG</string>
 	</array>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.momo-labs.Apprch</string>
+	</array>
 </dict>
 </plist>

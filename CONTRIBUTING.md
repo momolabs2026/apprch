@@ -5,13 +5,15 @@ Thanks for your interest in contributing. Apprch is a household tap-to-notify ap
 ## How to contribute
 
 1. **Fork** the repo (or create a branch from `staging` if you have write access)
-2. Make your changes on a feature branch — never commit to `main` or `staging`
+2. Make your changes on a `feature/*` branch — never commit to `main` or `staging`
 3. Open a **Pull Request into `staging`** with a clear description of what you changed and why
 4. Wait for `@momolabs2026` to review and merge. You cannot merge it yourself.
 
 Every PR requires a review from `@momolabs2026` (`CODEOWNERS`). Direct pushes to `main` and `staging` are blocked.
 
 If you are inviting a collaborator: give them **Read** access so they fork and open a PR. Only `@momolabs2026` should merge.
+
+Firebase config files (`GoogleService-Info.plist`, `google-services.json`) are gitignored. Ask `@momolabs2026` if you need them for a local build.
 
 ## Good first issues
 
@@ -22,7 +24,7 @@ The iOS MVP is usable. These are the next useful slices:
 - Leave a group, and remove a member
 - Universal Links after Apple Developer enrollment
 - Tests around EventStore / GroupStore
-- Widgets or a streak visualization on Trigger detail
+- A streak visualization on Trigger detail
 
 ## Project structure
 

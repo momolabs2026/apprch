@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.glance.appwidget)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)

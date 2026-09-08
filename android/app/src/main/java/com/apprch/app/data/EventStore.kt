@@ -1,6 +1,8 @@
 package com.apprch.app.data
 
+import com.apprch.app.ApprchApplication
 import com.apprch.app.model.startOfDay
+import com.apprch.app.widget.WidgetSnapshotSync
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -37,6 +39,7 @@ object EventStore {
             )
         )
         batch.commit().await()
+        WidgetSnapshotSync.refreshTrigger(ApprchApplication.appContext, triggerId, groupId)
     }
 
     suspend fun toggleToday(triggerId: String, groupId: String, currentlyComplete: Boolean) {
@@ -91,6 +94,7 @@ object EventStore {
         }
         batch.update(triggerRef, update)
         batch.commit().await()
+        WidgetSnapshotSync.refreshTrigger(ApprchApplication.appContext, triggerId, groupId)
     }
 
     fun userFacingMessage(error: Throwable): String {

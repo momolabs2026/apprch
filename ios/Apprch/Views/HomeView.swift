@@ -75,8 +75,10 @@ struct HomeView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    NFCReadButton { url in
-                        authVM.handleIncomingURL(url)
+                    if NFCTagController.isAvailable {
+                        NFCReadButton { url in
+                            authVM.handleIncomingURL(url)
+                        }
                     }
                 }
             }

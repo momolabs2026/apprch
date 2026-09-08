@@ -26,6 +26,7 @@ This is the slice people can use and build on. It is not the finished product.
 - Check a Trigger for today (the circle resets each day)
 - Write an NFC tag on iOS and tap it to log on iOS or Android
 - See a GitHub-style heatmap plus a short history
+- Pin a Trigger heatmap to the Home Screen as a widget
 - Invite people by search or share code
 - See group members as chips
 - Edit your name, password, profile photo, and appearance
@@ -36,10 +37,10 @@ This is the slice people can use and build on. It is not the finished product.
 - Push when someone else logs (FCM tokens exist; fan-out is not reliable yet)
 - Universal Links (`https://apprch.web.app/t/...`) — needs a paid Apple Developer account
 - Leave a group / remove a member
-- Widgets, streaks, and extra visualizations
+- Calendar, streak, and checklist visualizations
 - Tests
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and how PRs land.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and how PRs land. Contributions are welcome — fork, open a PR into `staging`, and `@momolabs2026` will review.
 
 ---
 
@@ -61,7 +62,11 @@ apprch/
 
 ### iOS
 
-SwiftUI: sign in → Solo plus Groups → Trigger list. Tapping an NFC tag opens `apprch://open?id={triggerId}` and logs that Trigger.
+SwiftUI: sign in → Solo plus Groups → Trigger list. Tapping an NFC tag opens `apprch://open?id={triggerId}` and logs that Trigger. The heatmap widget extension reads a snapshot the app writes to the App Group `group.com.momo-labs.Apprch`.
+
+### Android
+
+Jetpack Compose mirrors the iOS spaces and Triggers. A Glance Home Screen widget shows the same heatmap; pin it from a Trigger’s detail page.
 
 ### NFC flow
 
@@ -69,6 +74,7 @@ SwiftUI: sign in → Solo plus Groups → Trigger list. Tapping an NFC tag opens
 2. Edit it and write the tag (or copy the link)
 3. Tap the tag later — the app opens and logs
 4. Home shows a filled circle for today; the detail page shows the heatmap
+5. Open a Trigger and add its heatmap widget to keep it on the Home Screen
 
 On a Personal Team debug build, iOS cannot claim Universal Links, so tags use the custom `apprch://` scheme.
 
@@ -92,7 +98,8 @@ Visualization types in v1: **Log** and **Counter**.
 - [x] Phase 2 — iOS Triggers, spaces, heatmap, profile
 - [x] Phase 3 — Android trigger / space redesign
 - [x] Phase 4 — NFC write / read in the iOS app
-- [ ] Phase 5 — Calendar / streak / checklist visualizations + widgets
+- [x] Phase 5 — Heatmap Home Screen widgets
+- [ ] Phase 6 — Calendar / streak / checklist visualizations
 
 ---
 
@@ -101,6 +108,8 @@ Visualization types in v1: **Log** and **Counter**.
 You’ll need Firebase config files (`GoogleService-Info.plist` and `google-services.json` are gitignored).
 
 iOS: open `ios/Apprch.xcodeproj`, pick an iPhone simulator, press **⌘R**.
+
+Mac: in the same Xcode project, pick **My Mac (Designed for iPad)** and press **⌘R**. That runs this same iOS app in a Mac window. NFC tags and Home Screen widgets stay on iPhone.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup.
 

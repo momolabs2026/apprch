@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Read how PRs land
+    url: https://github.com/momolabs2026/apprch/blob/staging/CONTRIBUTING.md
+    about: Fork, open a PR into staging, and wait for @momolabs2026 to merge.

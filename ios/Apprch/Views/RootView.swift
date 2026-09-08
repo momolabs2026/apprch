@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -31,6 +32,13 @@ struct RootView: View {
                         Button("OK", role: .cancel) { authVM.linkErrorMessage = nil }
                     } message: {
                         Text(authVM.linkErrorMessage ?? "")
+                    }
+                    .task(id: spaces.map(\.id).joined(separator: ",")) {
+                        await WidgetSnapshotSync.refresh(groupIds: spaces.map(\.id))
+                    }
+                    .onChange(of: scenePhase) { _, phase in
+                        guard phase == .active else { return }
+                        Task { await WidgetSnapshotSync.refresh(groupIds: spaces.map(\.id)) }
                     }
             }
         }

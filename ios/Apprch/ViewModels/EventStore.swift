@@ -35,6 +35,7 @@ enum EventStore {
             forDocument: triggerRef
         )
         try await batch.commit()
+        await WidgetSnapshotSync.refreshTrigger(id: triggerId, groupId: groupId)
     }
 
     static func toggleToday(triggerId: String, groupId: String, currentlyComplete: Bool) async throws {
@@ -103,6 +104,7 @@ enum EventStore {
         }
         batch.updateData(triggerUpdate, forDocument: triggerRef)
         try await batch.commit()
+        await WidgetSnapshotSync.refreshTrigger(id: triggerId, groupId: groupId)
     }
 
     static func userFacingMessage(for error: Error) -> String {

@@ -2,9 +2,14 @@ package com.apprch.app.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.glance.appwidget.updateAll
+import com.apprch.app.ApprchApplication
 import com.apprch.app.data.GroupStore
 import com.apprch.app.messaging.FcmTokenManager
 import com.apprch.app.model.Space
+import com.apprch.app.widget.HeatmapGlanceWidget
+import com.apprch.app.widget.WidgetSnapshotStore
+import com.apprch.app.widget.WidgetSnapshotSync
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -42,6 +47,10 @@ class AppViewModel : ViewModel() {
             if (user == null) {
                 userListener?.remove()
                 _state.value = AppState.Unauthenticated
+                WidgetSnapshotStore.clear(ApprchApplication.appContext)
+                viewModelScope.launch {
+                    runCatching { HeatmapGlanceWidget().updateAll(ApprchApplication.appContext) }
+                }
             } else {
                 observeUserDoc(user.uid)
                 viewModelScope.launch {
@@ -112,5 +121,10 @@ class AppViewModel : ViewModel() {
             ?: Space(id = groupId, name = if (solo) "Solo" else "Group", solo = solo)
         val all = if (spaces.any { it.id == active.id }) spaces else listOf(active) + spaces
         _state.value = AppState.Ready(active = active, spaces = all)
+        viewModelScope.launch {
+            runCatching {
+                WidgetSnapshotSync.refresh(ApprchApplication.appContext, all.map { it.id })
+            }
+        }
     }
 }

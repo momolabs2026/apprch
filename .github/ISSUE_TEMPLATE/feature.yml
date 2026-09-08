@@ -1,0 +1,29 @@
+name: Feature or good first issue
+description: Suggest a change, or pick up an open slice
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where
+      options:
+        - iOS
+        - Android
+        - Backend / Firebase
+        - Docs
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you want to add
+      placeholder: The problem and the smallest change that would help.
+    validations:
+      required: true
+  - type: checkboxes
+    id: first
+    attributes:
+      label: Good first issue
+      options:
+        - label: This is small enough for a first-time contributor

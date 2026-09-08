@@ -11,6 +11,7 @@ struct TriggerDetailView: View {
     @State private var triggerListener: ListenerRegistration?
     @State private var showingMove = false
     @State private var showingEdit = false
+    @State private var showingAddWidget = false
     @State private var historyError: String?
     @EnvironmentObject var authVM: AuthViewModel
 
@@ -52,6 +53,19 @@ struct TriggerDetailView: View {
                         Text("\(trigger.eventCount ?? events.count)")
                             .font(.subheadline.weight(.semibold))
                     }
+                }
+            }
+
+            if !ApprchPlatform.isIOSAppOnMac {
+                Section {
+                    Button {
+                        WidgetSnapshotStore.markPendingPin(triggerId: trigger.id ?? "")
+                        showingAddWidget = true
+                    } label: {
+                        Label("Add Home Screen widget", systemImage: "square.grid.2x2")
+                    }
+                } footer: {
+                    Text("Keeps this heatmap on your Home Screen. Choose this Trigger when you add the widget.")
                 }
             }
 
@@ -116,6 +130,9 @@ struct TriggerDetailView: View {
                 editing: trigger
             )
         }
+        .sheet(isPresented: $showingAddWidget) {
+            AddHeatmapWidgetSheet(trigger: trigger)
+        }
         .onAppear { startListening() }
         .onChange(of: trigger.groupId) { _, _ in
             startListening()
@@ -154,6 +171,17 @@ struct TriggerDetailView: View {
                     .sorted { $0.date > $1.date }
                 events = newEvents
                 loadMissingNames(from: newEvents)
+                if let triggerId = trigger.id {
+                    WidgetSnapshotStore.upsert(
+                        WidgetTriggerSnapshot.make(
+                            id: triggerId,
+                            name: trigger.name,
+                            icon: trigger.icon,
+                            accentColorHex: trigger.accentColorHex ?? TriggerAccent.fallbackHex,
+                            dates: newEvents.map(\.date)
+                        )
+                    )
+                }
             }
     }
 
@@ -168,5 +196,51 @@ struct TriggerDetailView: View {
                 }
             }
         }
+    }
+}
+
+private struct AddHeatmapWidgetSheet: View {
+    let trigger: Trigger
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(spacing: 10) {
+                    Text(trigger.icon)
+                        .font(.largeTitle)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(trigger.name)
+                            .font(.title3.weight(.semibold))
+                        Text("Heatmap widget")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Touch and hold the Home Screen, then tap Edit and Add Widget.", systemImage: "1.circle.fill")
+                    Label("Choose Apprch, pick Trigger heatmap, and add it.", systemImage: "2.circle.fill")
+                    Label("Select \(trigger.icon) \(trigger.name) in the widget.", systemImage: "3.circle.fill")
+                }
+                .font(.body)
+                .foregroundStyle(.primary)
+
+                Text("You can add more than one widget if you want several Triggers in view.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Add to Home Screen")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

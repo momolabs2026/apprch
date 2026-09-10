@@ -40,7 +40,7 @@ final class NFCTagController: NSObject, ObservableObject {
         urlToWrite = url
         onRead = nil
         status = .idle
-        beginSession(alert: "Hold the top of your iPhone on the tag to write this Trigger.")
+        beginSession(alert: "Hold the top of your iPhone on the tag to write this Task.")
     }
 
     func read(onURL: @escaping (URL) -> Void) {

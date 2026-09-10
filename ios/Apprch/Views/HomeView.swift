@@ -117,7 +117,7 @@ struct HomeView: View {
             ContentUnavailableView {
                 Label("No groups yet", systemImage: "person.3")
             } description: {
-                Text("Solo stays yours. A group is a separate space you can move Triggers into.")
+                Text("Solo stays yours. A group is a separate space you can move Tasks into.")
             } actions: {
                 Button("Create a group") { showingAddGroup = true }
                     .buttonStyle(.borderedProminent)
@@ -202,13 +202,13 @@ private struct TriggerListView: View {
 
             if triggers.isEmpty {
                 ContentUnavailableView {
-                    Label("No triggers yet", systemImage: "dot.radiowaves.left.and.right")
+                    Label("No tasks yet", systemImage: "dot.radiowaves.left.and.right")
                 } description: {
                     Text(space.solo
-                        ? "Triggers in Solo are only for you. Open one later to move it into a group."
-                        : "Triggers here are shared with this group.")
+                        ? "Tasks in Solo are only for you. Open one later to move it into a group."
+                        : "Tasks here are shared with this group.")
                 } actions: {
-                    Button("Create a Trigger") { showingCreate = true }
+                    Button("Create a Task") { showingCreate = true }
                         .buttonStyle(.borderedProminent)
                 }
             } else {
@@ -219,7 +219,7 @@ private struct TriggerListView: View {
                         } label: {
                             TriggerRow(
                                 trigger: trigger,
-                                authorName: trigger.lastTriggeredByUid.flatMap { userNames[$0] }
+                                authorName: trigger.lastLoggedByUid.flatMap { userNames[$0] }
                             )
                         }
                         Button {
@@ -250,7 +250,7 @@ private struct TriggerListView: View {
                 Button {
                     showingCreate = true
                 } label: {
-                    Label("Create a Trigger", systemImage: "plus")
+                    Label("Create a Task", systemImage: "plus")
                 }
             }
         }
@@ -297,15 +297,15 @@ private struct TriggerListView: View {
     private func startListening() {
         listener?.remove()
         listener = Firestore.firestore()
-            .collection("triggers")
+            .collection("tasks")
             .whereField("groupId", isEqualTo: space.id)
             .addSnapshotListener { snapshot, _ in
                 let docs = snapshot?.documents.compactMap { doc -> Trigger? in
                     try? doc.data(as: Trigger.self)
                 } ?? []
                 triggers = docs.sorted { lhs, rhs in
-                    let l = lhs.lastTriggeredAt?.dateValue() ?? lhs.createdAt?.dateValue() ?? .distantPast
-                    let r = rhs.lastTriggeredAt?.dateValue() ?? rhs.createdAt?.dateValue() ?? .distantPast
+                    let l = lhs.lastLoggedAt?.dateValue() ?? lhs.createdAt?.dateValue() ?? .distantPast
+                    let r = rhs.lastLoggedAt?.dateValue() ?? rhs.createdAt?.dateValue() ?? .distantPast
                     return l > r
                 }
                 loadMissingNames(from: triggers)
@@ -313,7 +313,7 @@ private struct TriggerListView: View {
     }
 
     private func loadMissingNames(from triggers: [Trigger]) {
-        let missing = Set(triggers.compactMap(\.lastTriggeredByUid)).subtracting(userNames.keys)
+        let missing = Set(triggers.compactMap(\.lastLoggedByUid)).subtracting(userNames.keys)
         guard !missing.isEmpty else { return }
         Task {
             for uid in missing {
@@ -439,7 +439,7 @@ private struct TriggerRow: View {
     }
 
     private var activityText: String {
-        guard let last = trigger.lastTriggeredAt else {
+        guard let last = trigger.lastLoggedAt else {
             if (trigger.eventCount ?? 0) > 0 {
                 return "Logged"
             }

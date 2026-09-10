@@ -101,8 +101,8 @@ struct GroupSetupView: View {
 
     private var subtitle: String {
         switch mode {
-        case .choose: return "You’ll always keep a Solo space. Groups are extra spaces you can move Triggers into."
-        case .create: return "This adds a group next to your Solo space. Triggers stay private until you move one."
+        case .choose: return "You’ll always keep a Solo space. Groups are extra spaces you can move Tasks into."
+        case .create: return "This adds a group next to your Solo space. Tasks stay private until you move one."
         case .join: return "Enter the invite code. Your Solo space stays yours."
         }
     }

@@ -1,7 +1,8 @@
 package com.apprch.app.widget
 
 import android.content.Context
-import com.apprch.app.model.toTrigger
+import com.apprch.app.model.Task
+import com.apprch.app.model.toTask
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -24,13 +25,13 @@ object WidgetSnapshotSync {
         HeatmapGlanceWidget().updateAll(appContext)
     }
 
-    suspend fun refreshTrigger(context: Context, triggerId: String, groupId: String) {
+    suspend fun refreshTask(context: Context, taskId: String, groupId: String) {
         if (FirebaseAuth.getInstance().currentUser == null) return
         val db = FirebaseFirestore.getInstance()
-        val trigger = db.collection("triggers").document(triggerId).get().await().toTrigger()
+        val task = db.collection("tasks").document(taskId).get().await().toTask()
             ?: return
-        if (trigger.groupId != groupId) return
-        snapshotFor(trigger)?.let {
+        if (task.groupId != groupId) return
+        snapshotFor(task)?.let {
             WidgetSnapshotStore.upsert(context.applicationContext, it)
             HeatmapGlanceWidget().updateAll(context.applicationContext)
         }
@@ -38,24 +39,24 @@ object WidgetSnapshotSync {
 
     private suspend fun snapshotsIn(groupId: String): List<WidgetTriggerSnapshot> {
         val db = FirebaseFirestore.getInstance()
-        val docs = db.collection("triggers").whereEqualTo("groupId", groupId).get().await()
-        return docs.documents.mapNotNull { it.toTrigger() }.mapNotNull { snapshotFor(it) }
+        val docs = db.collection("tasks").whereEqualTo("groupId", groupId).get().await()
+        return docs.documents.mapNotNull { it.toTask() }.mapNotNull { snapshotFor(it) }
     }
 
-    private suspend fun snapshotFor(trigger: com.apprch.app.model.Trigger): WidgetTriggerSnapshot? {
+    private suspend fun snapshotFor(task: Task): WidgetTriggerSnapshot? {
         val db = FirebaseFirestore.getInstance()
         val events = db.collection("events")
-            .whereEqualTo("groupId", trigger.groupId)
-            .whereEqualTo("triggerId", trigger.id)
+            .whereEqualTo("groupId", task.groupId)
+            .whereEqualTo("taskId", task.id)
             .limit(400)
             .get()
             .await()
         val dates = events.documents.mapNotNull { (it.get("timestamp") as? Timestamp)?.toDate() }
         return WidgetSnapshotStore.make(
-            id = trigger.id,
-            name = trigger.name,
-            icon = trigger.icon,
-            accentColorHex = trigger.accentColorHex,
+            id = task.id,
+            name = task.name,
+            icon = task.icon,
+            accentColorHex = task.accentColorHex,
             dates = dates
         )
     }

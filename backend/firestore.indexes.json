@@ -4,7 +4,7 @@
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "triggerId", "order": "ASCENDING" },
+        { "fieldPath": "taskId", "order": "ASCENDING" },
         { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
     },
@@ -13,11 +13,11 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "groupId", "order": "ASCENDING" },
-        { "fieldPath": "triggerId", "order": "ASCENDING" }
+        { "fieldPath": "taskId", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "triggers",
+      "collectionGroup": "tasks",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "groupId", "order": "ASCENDING" },

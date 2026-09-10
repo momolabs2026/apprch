@@ -379,7 +379,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Apprch-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Apprch;
-				INFOPLIST_KEY_NFCReaderUsageDescription = "Apprch writes Trigger links onto NFC tags and reads them so you don’t need another app.";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Apprch writes Task links onto NFC tags and reads them so you don’t need another app.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -423,7 +423,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Apprch-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Apprch;
-				INFOPLIST_KEY_NFCReaderUsageDescription = "Apprch writes Trigger links onto NFC tags and reads them so you don’t need another app.";
+				INFOPLIST_KEY_NFCReaderUsageDescription = "Apprch writes Task links onto NFC tags and reads them so you don’t need another app.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

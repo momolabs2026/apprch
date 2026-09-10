@@ -1,4 +1,4 @@
-package com.apprch.app.ui.trigger
+package com.apprch.app.ui.task
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -43,8 +43,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.apprch.app.model.Trigger
-import com.apprch.app.model.TriggerAccent
+import com.apprch.app.model.Task
+import com.apprch.app.model.TaskAccent
 import com.apprch.app.model.colorFromHex
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -56,10 +56,10 @@ private val icons = listOf("📌", "✅", "🏠", "🧹", "💊", "📦", "⭐",
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateTriggerScreen(
+fun CreateTaskScreen(
     groupId: String,
     solo: Boolean,
-    editing: Trigger? = null,
+    editing: Task? = null,
     onDismiss: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -69,7 +69,7 @@ fun CreateTriggerScreen(
     var notificationMessage by remember { mutableStateOf(editing?.notificationMessage.orEmpty()) }
     var messageEdited by remember { mutableStateOf(editing != null) }
     var visualization by remember { mutableStateOf(editing?.visualization ?: "log") }
-    var accentHex by remember { mutableStateOf(editing?.accentColorHex ?: TriggerAccent.fallbackHex) }
+    var accentHex by remember { mutableStateOf(editing?.accentColorHex ?: TaskAccent.fallbackHex) }
     var createdId by remember { mutableStateOf<String?>(null) }
     var isSaving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -94,7 +94,7 @@ fun CreateTriggerScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(icon, style = MaterialTheme.typography.displayMedium)
-                Text(name.ifBlank { "Trigger created" }, style = MaterialTheme.typography.titleLarge)
+                Text(name.ifBlank { "Task created" }, style = MaterialTheme.typography.titleLarge)
                 Spacer(Modifier.height(12.dp))
                 Text(
                     "Copy this as a URI (not a website). Tapping the tag opens Apprch and logs it.",
@@ -107,6 +107,8 @@ fun CreateTriggerScreen(
                 Button(onClick = { copyText(context, url) }, modifier = Modifier.fillMaxWidth()) {
                     Text("Copy link")
                 }
+                Spacer(Modifier.height(12.dp))
+                NfcWriteButton(url)
             }
         }
         return
@@ -115,7 +117,7 @@ fun CreateTriggerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (editing == null) "Create a Trigger" else "Edit Trigger") },
+                title = { Text(if (editing == null) "Create a Task" else "Edit Task") },
                 navigationIcon = { TextButton(onClick = onDismiss) { Text("Cancel") } },
                 actions = {
                     TextButton(
@@ -136,14 +138,14 @@ fun CreateTriggerScreen(
                                     )
                                     val db = FirebaseFirestore.getInstance()
                                     if (editing != null) {
-                                        db.collection("triggers").document(editing.id).update(payload).await()
+                                        db.collection("tasks").document(editing.id).update(payload).await()
                                         onDismiss()
                                     } else {
                                         payload["groupId"] = groupId
                                         payload["createdByUid"] = uid
                                         payload["createdAt"] = FieldValue.serverTimestamp()
                                         payload["eventCount"] = 0
-                                        val ref = db.collection("triggers").document()
+                                        val ref = db.collection("tasks").document()
                                         ref.set(payload).await()
                                         createdId = ref.id
                                     }
@@ -223,7 +225,10 @@ fun CreateTriggerScreen(
             if (editing != null) {
                 Text("NFC tag", style = MaterialTheme.typography.titleSmall)
                 Text(editing.tagUrl, style = MaterialTheme.typography.bodySmall)
-                OutlinedButton(onClick = { copyText(context, editing.tagUrl) }) { Text("Copy link") }
+                OutlinedButton(onClick = { copyText(context, editing.tagUrl) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Copy link")
+                }
+                NfcWriteButton(editing.tagUrl)
             }
             Text("Accent color", style = MaterialTheme.typography.titleSmall)
             LazyVerticalGrid(
@@ -231,7 +236,7 @@ fun CreateTriggerScreen(
                 modifier = Modifier.height(56.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(TriggerAccent.presets) { hex ->
+                items(TaskAccent.presets) { hex ->
                     Box(
                         modifier = Modifier
                             .size(28.dp)

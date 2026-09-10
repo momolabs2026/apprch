@@ -53,14 +53,14 @@ import androidx.core.content.ContextCompat
 import com.apprch.app.data.EventStore
 import com.apprch.app.data.GroupStore
 import com.apprch.app.model.Space
-import com.apprch.app.model.Trigger
-import com.apprch.app.model.toTrigger
+import com.apprch.app.model.Task
+import com.apprch.app.model.toTask
 import com.apprch.app.ui.components.MemberChipsRow
 import com.apprch.app.ui.invite.InviteScreen
 import com.apprch.app.ui.profile.ProfileScreen
-import com.apprch.app.ui.trigger.CreateTriggerScreen
-import com.apprch.app.ui.trigger.MoveTriggerScreen
-import com.apprch.app.ui.trigger.TriggerDetailScreen
+import com.apprch.app.ui.task.CreateTaskScreen
+import com.apprch.app.ui.task.MoveTaskScreen
+import com.apprch.app.ui.task.TaskDetailScreen
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
@@ -83,9 +83,9 @@ fun HomeScreen(
     var showingAddGroup by remember { mutableStateOf(false) }
     var showingJoin by remember { mutableStateOf(false) }
     var openedGroup by remember { mutableStateOf<Space?>(null) }
-    var selectedTrigger by remember { mutableStateOf<Trigger?>(null) }
-    var editingTrigger by remember { mutableStateOf<Trigger?>(null) }
-    var movingTrigger by remember { mutableStateOf<Trigger?>(null) }
+    var selectedTask by remember { mutableStateOf<Task?>(null) }
+    var editingTask by remember { mutableStateOf<Task?>(null) }
+    var movingTask by remember { mutableStateOf<Task?>(null) }
     var creatingIn by remember { mutableStateOf<Space?>(null) }
     var invitingGroupId by remember { mutableStateOf<String?>(null) }
 
@@ -104,33 +104,33 @@ fun HomeScreen(
     when {
         showingProfile -> ProfileScreen(onDismiss = { showingProfile = false }, onSignOut = onSignOut)
         invitingGroupId != null -> InviteScreen(groupId = invitingGroupId!!, onDismiss = { invitingGroupId = null })
-        creatingIn != null -> CreateTriggerScreen(
+        creatingIn != null -> CreateTaskScreen(
             groupId = creatingIn!!.id,
             solo = creatingIn!!.solo,
             onDismiss = { creatingIn = null }
         )
-        editingTrigger != null -> CreateTriggerScreen(
-            groupId = editingTrigger!!.groupId,
-            solo = spaces.firstOrNull { it.id == editingTrigger!!.groupId }?.solo == true,
-            editing = editingTrigger,
-            onDismiss = { editingTrigger = null }
+        editingTask != null -> CreateTaskScreen(
+            groupId = editingTask!!.groupId,
+            solo = spaces.firstOrNull { it.id == editingTask!!.groupId }?.solo == true,
+            editing = editingTask,
+            onDismiss = { editingTask = null }
         )
-        movingTrigger != null -> MoveTriggerScreen(
-            trigger = movingTrigger!!,
+        movingTask != null -> MoveTaskScreen(
+            task = movingTask!!,
             spaces = spaces,
-            onDismiss = { movingTrigger = null },
+            onDismiss = { movingTask = null },
             onMoved = { groupId ->
-                movingTrigger = null
-                selectedTrigger = null
+                movingTask = null
+                selectedTask = null
                 onSelectSpace(groupId)
             }
         )
-        selectedTrigger != null -> TriggerDetailScreen(
-            initial = selectedTrigger!!,
+        selectedTask != null -> TaskDetailScreen(
+            initial = selectedTask!!,
             spaces = spaces,
-            onBack = { selectedTrigger = null },
-            onEdit = { editingTrigger = it },
-            onMove = { movingTrigger = it }
+            onBack = { selectedTask = null },
+            onEdit = { editingTask = it },
+            onMove = { movingTask = it }
         )
         else -> Scaffold(
             topBar = {
@@ -165,7 +165,7 @@ fun HomeScreen(
                         }
                         if (spaceForCreate != null) {
                             IconButton(onClick = { creatingIn = spaceForCreate }) {
-                                Icon(Icons.Filled.Add, contentDescription = "Create a Trigger")
+                                Icon(Icons.Filled.Add, contentDescription = "Create a Task")
                             }
                         }
                     }
@@ -196,9 +196,9 @@ fun HomeScreen(
                 when (section) {
                     HomeSection.Solo -> {
                         if (personal != null) {
-                            TriggerList(
+                            TaskList(
                                 space = personal,
-                                onOpen = { selectedTrigger = it },
+                                onOpen = { selectedTask = it },
                                 onCreate = { creatingIn = personal }
                             )
                         } else {
@@ -208,18 +208,18 @@ fun HomeScreen(
                     HomeSection.Groups -> when {
                         groups.isEmpty() -> EmptyState(
                             title = "No groups yet",
-                            body = "Solo stays yours. A group is a separate space you can move Triggers into.",
+                            body = "Solo stays yours. A group is a separate space you can move Tasks into.",
                             primary = "Create a group" to { showingAddGroup = true },
                             secondary = "Join a group" to { showingJoin = true }
                         )
-                        groups.size == 1 -> TriggerList(
+                        groups.size == 1 -> TaskList(
                             space = groups[0],
-                            onOpen = { selectedTrigger = it },
+                            onOpen = { selectedTask = it },
                             onCreate = { creatingIn = groups[0] }
                         )
-                        openedGroup != null -> TriggerList(
+                        openedGroup != null -> TaskList(
                             space = openedGroup!!,
-                            onOpen = { selectedTrigger = it },
+                            onOpen = { selectedTask = it },
                             onCreate = { creatingIn = openedGroup }
                         )
                         else -> LazyColumn {
@@ -264,14 +264,14 @@ fun HomeScreen(
 }
 
 @Composable
-private fun TriggerList(
+private fun TaskList(
     space: Space,
-    onOpen: (Trigger) -> Unit,
+    onOpen: (Task) -> Unit,
     onCreate: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var triggers by remember { mutableStateOf<List<Trigger>>(emptyList()) }
+    var tasks by remember { mutableStateOf<List<Task>>(emptyList()) }
     var names by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var toggleError by remember { mutableStateOf<String?>(null) }
 
@@ -289,13 +289,13 @@ private fun TriggerList(
 
     DisposableEffect(space.id) {
         val registration = FirebaseFirestore.getInstance()
-            .collection("triggers")
+            .collection("tasks")
             .whereEqualTo("groupId", space.id)
             .addSnapshotListener { snapshot, _ ->
-                triggers = snapshot?.documents?.mapNotNull { it.toTrigger() }
-                    ?.sortedByDescending { it.lastTriggeredAt?.time ?: it.createdAt?.time ?: 0L }
+                tasks = snapshot?.documents?.mapNotNull { it.toTask() }
+                    ?.sortedByDescending { it.lastLoggedAt?.time ?: it.createdAt?.time ?: 0L }
                     ?: emptyList()
-                val missing = triggers.mapNotNull { it.lastTriggeredByUid }.distinct().filter { it !in names }
+                val missing = tasks.mapNotNull { it.lastLoggedByUid }.distinct().filter { it !in names }
                 missing.forEach { uid ->
                     FirebaseFirestore.getInstance().collection("users").document(uid).get()
                         .addOnSuccessListener { doc ->
@@ -311,44 +311,44 @@ private fun TriggerList(
         if (!space.solo) {
             MemberChipsRow(groupId = space.id)
         }
-        if (triggers.isEmpty()) {
+        if (tasks.isEmpty()) {
             EmptyState(
-                title = "No triggers yet",
+                title = "No tasks yet",
                 body = if (space.solo) {
-                    "Triggers in Solo are only for you. Open one later to move it into a group."
+                    "Tasks in Solo are only for you. Open one later to move it into a group."
                 } else {
-                    "Triggers here are shared with this group."
+                    "Tasks here are shared with this group."
                 },
-                primary = "Create a Trigger" to onCreate
+                primary = "Create a Task" to onCreate
             )
         } else {
             LazyColumn(Modifier.fillMaxSize()) {
-                items(triggers, key = { it.id }) { trigger ->
+                items(tasks, key = { it.id }) { task ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOpen(trigger) }
+                            .clickable { onOpen(task) }
                             .padding(horizontal = 8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         ListItem(
-                            headlineContent = { Text("${trigger.icon}  ${trigger.name}") },
-                            supportingContent = { Text(activityText(trigger, names[trigger.lastTriggeredByUid])) },
+                            headlineContent = { Text("${task.icon}  ${task.name}") },
+                            supportingContent = { Text(activityText(task, names[task.lastLoggedByUid])) },
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(onClick = {
                             scope.launch {
                                 try {
-                                    EventStore.toggleToday(trigger.id, trigger.groupId, trigger.isCompletedToday)
+                                    EventStore.toggleToday(task.id, task.groupId, task.isCompletedToday)
                                 } catch (e: Exception) {
                                     toggleError = EventStore.userFacingMessage(e)
                                 }
                             }
                         }) {
                             Icon(
-                                imageVector = if (trigger.isCompletedToday) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
-                                contentDescription = if (trigger.isCompletedToday) "Mark not done today" else "Mark done today",
-                                tint = if (trigger.isCompletedToday) trigger.accent else Color.Unspecified
+                                imageVector = if (task.isCompletedToday) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
+                                contentDescription = if (task.isCompletedToday) "Mark not done today" else "Mark done today",
+                                tint = if (task.isCompletedToday) task.accent else Color.Unspecified
                             )
                         }
                     }
@@ -430,8 +430,8 @@ private fun NameDialog(
     )
 }
 
-private fun activityText(trigger: Trigger, authorName: String?): String {
-    val last = trigger.lastTriggeredAt ?: return if (trigger.eventCount > 0) "Logged" else "No activity yet"
+private fun activityText(task: Task, authorName: String?): String {
+    val last = task.lastLoggedAt ?: return if (task.eventCount > 0) "Logged" else "No activity yet"
     val who = authorName ?: "Someone"
     val minutes = TimeUnit.MILLISECONDS.toMinutes(Date().time - last.time).coerceAtLeast(1)
     val whenText = when {

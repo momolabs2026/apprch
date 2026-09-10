@@ -96,27 +96,27 @@ export const logEvent = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
   }
 
-  const triggerId = data?.triggerId as string | undefined;
+  const taskId = (data?.taskId ?? data?.triggerId) as string | undefined;
   const groupId = data?.groupId as string | undefined;
-  if (!groupId || !triggerId) {
+  if (!groupId || !taskId) {
     throw new functions.https.HttpsError(
       "invalid-argument",
-      "groupId and triggerId are required."
+      "groupId and taskId are required."
     );
   }
 
   const uid = context.auth.uid;
 
-  const triggerDoc = await db.collection("triggers").doc(triggerId).get();
-  if (!triggerDoc.exists) {
-    throw new functions.https.HttpsError("not-found", "Trigger not found.");
+  const taskDoc = await db.collection("tasks").doc(taskId).get();
+  if (!taskDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Task not found.");
   }
 
-  const trigger = triggerDoc.data() ?? {};
-  if (trigger.groupId !== groupId) {
+  const task = taskDoc.data() ?? {};
+  if (task.groupId !== groupId) {
     throw new functions.https.HttpsError(
       "permission-denied",
-      "This trigger is not part of your group."
+      "This task is not part of your group."
     );
   }
 
@@ -133,21 +133,21 @@ export const logEvent = functions.https.onCall(async (data, context) => {
     );
   }
 
-  const notificationTitle = trigger.name ? `Apprch · ${trigger.name}` : "Apprch";
+  const notificationTitle = task.name ? `Apprch · ${task.name}` : "Apprch";
   const notificationBody =
-    (trigger.notificationMessage as string | undefined)?.trim() ||
-    `${trigger.icon ?? ""} ${trigger.name ?? "Update"}`.trim();
+    (task.notificationMessage as string | undefined)?.trim() ||
+    `${task.icon ?? ""} ${task.name ?? "Update"}`.trim();
 
   await Promise.all([
     db.collection("events").add({
       groupId,
-      triggerId,
-      triggeredByUid: uid,
+      taskId,
+      loggedByUid: uid,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     }),
-    triggerDoc.ref.update({
-      lastTriggeredAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastTriggeredByUid: uid,
+    taskDoc.ref.update({
+      lastLoggedAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastLoggedByUid: uid,
       eventCount: admin.firestore.FieldValue.increment(1),
     }),
   ]);

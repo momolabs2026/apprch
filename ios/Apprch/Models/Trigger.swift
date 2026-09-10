@@ -32,8 +32,8 @@ struct Trigger: Identifiable, Codable {
     var visualizationType: String
     var createdByUid: String
     var createdAt: Timestamp?
-    var lastTriggeredAt: Timestamp?
-    var lastTriggeredByUid: String?
+    var lastLoggedAt: Timestamp?
+    var lastLoggedByUid: String?
     var eventCount: Int?
     var accentColorHex: String?
 
@@ -46,7 +46,7 @@ struct Trigger: Identifiable, Codable {
     }
 
     var isCompletedToday: Bool {
-        guard let last = lastTriggeredAt?.dateValue() else { return false }
+        guard let last = lastLoggedAt?.dateValue() else { return false }
         return Calendar.current.isDateInToday(last)
     }
 

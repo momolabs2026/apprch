@@ -65,7 +65,7 @@ struct TriggerDetailView: View {
                         Label("Add Home Screen widget", systemImage: "square.grid.2x2")
                     }
                 } footer: {
-                    Text("Keeps this heatmap on your Home Screen. Choose this Trigger when you add the widget.")
+                    Text("Keeps this heatmap on your Home Screen. Choose this Task when you add the widget.")
                 }
             }
 
@@ -82,7 +82,7 @@ struct TriggerDetailView: View {
                     } else {
                         ForEach(Array(events.prefix(8))) { event in
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(userNames[event.triggeredByUid] ?? "Someone")
+                                Text(userNames[event.loggedByUid] ?? "Someone")
                                 Text(event.date.apprchRelativeString)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -148,7 +148,7 @@ struct TriggerDetailView: View {
 
         triggerListener?.remove()
         triggerListener = Firestore.firestore()
-            .collection("triggers").document(triggerId)
+            .collection("tasks").document(triggerId)
             .addSnapshotListener { snapshot, _ in
                 if let updated = try? snapshot?.data(as: Trigger.self) {
                     trigger = updated
@@ -159,7 +159,7 @@ struct TriggerDetailView: View {
         eventsListener = Firestore.firestore()
             .collection("events")
             .whereField("groupId", isEqualTo: trigger.groupId)
-            .whereField("triggerId", isEqualTo: triggerId)
+            .whereField("taskId", isEqualTo: triggerId)
             .limit(to: 400)
             .addSnapshotListener { snapshot, error in
                 if let error {
@@ -186,7 +186,7 @@ struct TriggerDetailView: View {
     }
 
     private func loadMissingNames(from events: [TriggerEvent]) {
-        let missing = Set(events.map(\.triggeredByUid)).subtracting(userNames.keys)
+        let missing = Set(events.map(\.loggedByUid)).subtracting(userNames.keys)
         guard !missing.isEmpty else { return }
         Task {
             for uid in missing {
@@ -220,13 +220,13 @@ private struct AddHeatmapWidgetSheet: View {
 
                 VStack(alignment: .leading, spacing: 12) {
                     Label("Touch and hold the Home Screen, then tap Edit and Add Widget.", systemImage: "1.circle.fill")
-                    Label("Choose Apprch, pick Trigger heatmap, and add it.", systemImage: "2.circle.fill")
+                    Label("Choose Apprch, pick Task heatmap, and add it.", systemImage: "2.circle.fill")
                     Label("Select \(trigger.icon) \(trigger.name) in the widget.", systemImage: "3.circle.fill")
                 }
                 .font(.body)
                 .foregroundStyle(.primary)
 
-                Text("You can add more than one widget if you want several Triggers in view.")
+                Text("You can add more than one widget if you want several Tasks in view.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 

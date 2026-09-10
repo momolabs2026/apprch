@@ -23,7 +23,7 @@ struct RootView: View {
                         ConfirmEventView(triggerId: pending.id)
                     }
                     .alert(
-                        "This trigger isn’t available",
+                        "This task isn’t available",
                         isPresented: Binding(
                             get: { authVM.linkErrorMessage != nil },
                             set: { if !$0 { authVM.linkErrorMessage = nil } }

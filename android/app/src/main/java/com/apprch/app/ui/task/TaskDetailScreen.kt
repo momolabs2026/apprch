@@ -1,4 +1,4 @@
-package com.apprch.app.ui.trigger
+package com.apprch.app.ui.task
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,11 +33,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.updateAll
 import com.apprch.app.model.Space
-import com.apprch.app.model.Trigger
-import com.apprch.app.model.TriggerEvent
+import com.apprch.app.model.Task
+import com.apprch.app.model.TaskEvent
 import com.apprch.app.model.isSameDay
-import com.apprch.app.model.toTrigger
-import com.apprch.app.model.toTriggerEvent
+import com.apprch.app.model.toTask
+import com.apprch.app.model.toTaskEvent
 import com.apprch.app.widget.HeatmapGlanceWidget
 import com.apprch.app.widget.HeatmapWidgetInstaller
 import com.apprch.app.widget.WidgetSnapshotStore
@@ -48,15 +48,15 @@ import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TriggerDetailScreen(
-    initial: Trigger,
+fun TaskDetailScreen(
+    initial: Task,
     spaces: List<Space>,
     onBack: () -> Unit,
-    onEdit: (Trigger) -> Unit,
-    onMove: (Trigger) -> Unit
+    onEdit: (Task) -> Unit,
+    onMove: (Task) -> Unit
 ) {
     var trigger by remember(initial.id) { mutableStateOf(initial) }
-    var events by remember { mutableStateOf<List<TriggerEvent>>(emptyList()) }
+    var events by remember { mutableStateOf<List<TaskEvent>>(emptyList()) }
     var names by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var historyError by remember { mutableStateOf<String?>(null) }
     var showWidgetHelp by remember { mutableStateOf(false) }
@@ -65,13 +65,13 @@ fun TriggerDetailScreen(
 
     DisposableEffect(trigger.id, trigger.groupId) {
         val db = FirebaseFirestore.getInstance()
-        val triggerReg = db.collection("triggers").document(trigger.id)
+        val triggerReg = db.collection("tasks").document(trigger.id)
             .addSnapshotListener { snapshot, _ ->
-                snapshot?.toTrigger()?.let { trigger = it }
+                snapshot?.toTask()?.let { trigger = it }
             }
         val eventsReg = db.collection("events")
             .whereEqualTo("groupId", trigger.groupId)
-            .whereEqualTo("triggerId", trigger.id)
+            .whereEqualTo("taskId", trigger.id)
             .limit(400)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -79,7 +79,7 @@ fun TriggerDetailScreen(
                     return@addSnapshotListener
                 }
                 historyError = null
-                events = snapshot?.documents?.mapNotNull { it.toTriggerEvent() }
+                events = snapshot?.documents?.mapNotNull { it.toTaskEvent() }
                     ?.sortedByDescending { it.date.time }
                     ?: emptyList()
                 WidgetSnapshotStore.upsert(
@@ -93,7 +93,7 @@ fun TriggerDetailScreen(
                     )
                 )
                 scope.launch { HeatmapGlanceWidget().updateAll(context) }
-                val missing = events.map { it.triggeredByUid }.distinct().filter { it !in names }
+                val missing = events.map { it.loggedByUid }.distinct().filter { it !in names }
                 missing.forEach { uid ->
                     db.collection("users").document(uid).get()
                         .addOnSuccessListener { doc ->
@@ -176,7 +176,7 @@ fun TriggerDetailScreen(
             } else {
                 items(events.take(8), key = { it.id }) { event ->
                     Column(Modifier.padding(vertical = 8.dp)) {
-                        Text(names[event.triggeredByUid] ?: "Someone")
+                        Text(names[event.loggedByUid] ?: "Someone")
                         Text(relativeString(event.date), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -190,7 +190,7 @@ fun TriggerDetailScreen(
             confirmButton = { TextButton(onClick = { showWidgetHelp = false }) { Text("OK") } },
             title = { Text("Add to Home Screen") },
             text = {
-                Text("Touch and hold the Home Screen, choose Widgets, then add Apprch’s Trigger heatmap and pick this Trigger.")
+                Text("Touch and hold the Home Screen, choose Widgets, then add Apprch’s Task heatmap and pick this Task.")
             }
         )
     }

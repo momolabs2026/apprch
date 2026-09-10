@@ -45,7 +45,7 @@ object HeatmapBitmap {
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
-        val title = if (snapshot != null) "${snapshot.icon}  ${snapshot.name}" else "Trigger heatmap"
+        val title = if (snapshot != null) "${snapshot.icon}  ${snapshot.name}" else "Task heatmap"
         val subtitle = yearLabel(snapshot?.yearTotal ?: 0)
         val today = todayLabel(snapshot?.todayCount ?: 0)
 

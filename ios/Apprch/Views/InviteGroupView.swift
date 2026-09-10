@@ -40,7 +40,7 @@ struct InviteGroupView: View {
                     ContentUnavailableView(
                         "Solo stays private",
                         systemImage: "person",
-                        description: Text("Open a Trigger and choose Share this Trigger to move it into a group. Solo itself doesn’t get invite codes.")
+                        description: Text("Open a Task and choose Share this Task to move it into a group. Solo itself doesn’t get invite codes.")
                     )
                 } else if let inviteCode {
                     inviteBody(inviteCode)

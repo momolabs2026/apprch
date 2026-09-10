@@ -80,7 +80,7 @@ class HeatmapWidgetConfigActivity : ComponentActivity() {
     }
 
     private fun finishWith(triggerId: String) {
-        HeatmapWidgetInstaller.bindTrigger(this, appWidgetId, triggerId)
+        HeatmapWidgetInstaller.bindTask(this, appWidgetId, triggerId)
         val result = Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
         setResult(RESULT_OK, result)
         finish()
@@ -97,7 +97,7 @@ private fun WidgetPicker(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Choose a Trigger") },
+                title = { Text("Choose a Task") },
                 navigationIcon = {
                     TextButton(onClick = onCancel) { Text("Cancel") }
                 }
@@ -106,7 +106,7 @@ private fun WidgetPicker(
     ) { padding ->
         if (triggers.isEmpty()) {
             Text(
-                "Open Apprch and sign in so your Triggers can show here.",
+                "Open Apprch and sign in so your Tasks can show here.",
                 modifier = Modifier
                     .padding(padding)
                     .padding(24.dp)

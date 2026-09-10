@@ -9,8 +9,8 @@ enum EventStore {
         }
 
         let db = Firestore.firestore()
-        let triggerRef = db.collection("triggers").document(triggerId)
-        let snapshot = try await triggerRef.getDocument()
+        let taskRef = db.collection("tasks").document(triggerId)
+        let snapshot = try await taskRef.getDocument()
         guard snapshot.exists, snapshot.data()?["groupId"] as? String == groupId else {
             throw EventStoreError.unavailable
         }
@@ -20,19 +20,19 @@ enum EventStore {
         batch.setData(
             [
                 "groupId": groupId,
-                "triggerId": triggerId,
-                "triggeredByUid": uid,
+                "taskId": triggerId,
+                "loggedByUid": uid,
                 "timestamp": FieldValue.serverTimestamp()
             ],
             forDocument: eventRef
         )
         batch.updateData(
             [
-                "lastTriggeredAt": FieldValue.serverTimestamp(),
-                "lastTriggeredByUid": uid,
+                "lastLoggedAt": FieldValue.serverTimestamp(),
+                "lastLoggedByUid": uid,
                 "eventCount": FieldValue.increment(Int64(1))
             ],
-            forDocument: triggerRef
+            forDocument: taskRef
         )
         try await batch.commit()
         await WidgetSnapshotSync.refreshTrigger(id: triggerId, groupId: groupId)
@@ -52,15 +52,15 @@ enum EventStore {
         }
 
         let db = Firestore.firestore()
-        let triggerRef = db.collection("triggers").document(triggerId)
-        let snapshot = try await triggerRef.getDocument()
+        let taskRef = db.collection("tasks").document(triggerId)
+        let snapshot = try await taskRef.getDocument()
         guard snapshot.exists, snapshot.data()?["groupId"] as? String == groupId else {
             throw EventStoreError.unavailable
         }
 
         let eventsSnap = try await db.collection("events")
             .whereField("groupId", isEqualTo: groupId)
-            .whereField("triggerId", isEqualTo: triggerId)
+            .whereField("taskId", isEqualTo: triggerId)
             .getDocuments()
 
         let startOfDay = Calendar.current.startOfDay(for: Date())
@@ -92,17 +92,17 @@ enum EventStore {
         let currentCount = (snapshot.data()?["eventCount"] as? Int)
             ?? (snapshot.data()?["eventCount"] as? Int64).map(Int.init)
             ?? eventsSnap.documents.count
-        var triggerUpdate: [String: Any] = [
+        var taskUpdate: [String: Any] = [
             "eventCount": max(0, currentCount - today.count)
         ]
         if let latestEarlier {
-            triggerUpdate["lastTriggeredAt"] = latestEarlier.data()["timestamp"] as Any
-            triggerUpdate["lastTriggeredByUid"] = latestEarlier.data()["triggeredByUid"] as Any
+            taskUpdate["lastLoggedAt"] = latestEarlier.data()["timestamp"] as Any
+            taskUpdate["lastLoggedByUid"] = (latestEarlier.data()["loggedByUid"] ?? latestEarlier.data()["triggeredByUid"]) as Any
         } else {
-            triggerUpdate["lastTriggeredAt"] = FieldValue.delete()
-            triggerUpdate["lastTriggeredByUid"] = FieldValue.delete()
+            taskUpdate["lastLoggedAt"] = FieldValue.delete()
+            taskUpdate["lastLoggedByUid"] = FieldValue.delete()
         }
-        batch.updateData(triggerUpdate, forDocument: triggerRef)
+        batch.updateData(taskUpdate, forDocument: taskRef)
         try await batch.commit()
         await WidgetSnapshotSync.refreshTrigger(id: triggerId, groupId: groupId)
     }
@@ -127,7 +127,7 @@ enum EventStoreError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .signedOut: return "Please sign in again."
-        case .unavailable: return "This trigger isn’t available."
+        case .unavailable: return "This task isn’t available."
         }
     }
 }

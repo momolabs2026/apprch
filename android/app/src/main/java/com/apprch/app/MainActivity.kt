@@ -38,12 +38,12 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIntent(intent: Intent) {
         val data = intent.data ?: return
-        val triggerId = when {
+        val taskId = when {
             data.scheme == "apprch" -> data.getQueryParameter("id")
-            data.scheme == "https" && data.pathSegments.getOrNull(0) in listOf("t", "trigger") ->
+            data.scheme == "https" && data.pathSegments.getOrNull(0) in listOf("t", "task", "trigger") ->
                 data.pathSegments.getOrNull(1)
             else -> null
         } ?: return
-        appViewModel.setPendingTrigger(triggerId)
+        appViewModel.setPendingTask(taskId)
     }
 }

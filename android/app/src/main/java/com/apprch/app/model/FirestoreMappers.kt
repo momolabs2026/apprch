@@ -2,10 +2,10 @@ package com.apprch.app.model
 
 import com.google.firebase.firestore.DocumentSnapshot
 
-fun DocumentSnapshot.toTrigger(): Trigger? {
+fun DocumentSnapshot.toTask(): Task? {
     val name = getString("name") ?: return null
     val groupId = getString("groupId") ?: return null
-    return Trigger(
+    return Task(
         id = id,
         groupId = groupId,
         name = name,
@@ -14,20 +14,21 @@ fun DocumentSnapshot.toTrigger(): Trigger? {
         visualizationType = getString("visualizationType") ?: "log",
         createdByUid = getString("createdByUid").orEmpty(),
         createdAt = getTimestamp("createdAt")?.toDate(),
-        lastTriggeredAt = getTimestamp("lastTriggeredAt")?.toDate(),
-        lastTriggeredByUid = getString("lastTriggeredByUid"),
+        lastLoggedAt = (getTimestamp("lastLoggedAt") ?: getTimestamp("lastTriggeredAt"))?.toDate(),
+        lastLoggedByUid = getString("lastLoggedByUid") ?: getString("lastTriggeredByUid"),
         eventCount = getLong("eventCount")?.toInt() ?: 0,
         accentColorHex = getString("accentColorHex")
     )
 }
 
-fun DocumentSnapshot.toTriggerEvent(): TriggerEvent? {
+fun DocumentSnapshot.toTaskEvent(): TaskEvent? {
     val timestamp = getTimestamp("timestamp")?.toDate() ?: return null
-    return TriggerEvent(
+    val loggedByUid = getString("loggedByUid") ?: getString("triggeredByUid") ?: return null
+    return TaskEvent(
         id = id,
         groupId = getString("groupId").orEmpty(),
-        triggerId = getString("triggerId").orEmpty(),
-        triggeredByUid = getString("triggeredByUid") ?: return null,
+        taskId = getString("taskId") ?: getString("triggerId").orEmpty(),
+        loggedByUid = loggedByUid,
         date = timestamp
     )
 }

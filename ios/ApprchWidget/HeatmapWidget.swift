@@ -16,17 +16,17 @@ struct HeatmapWidget: Widget {
                     Color("WidgetBackground")
                 }
         }
-        .configurationDisplayName("Trigger heatmap")
-        .description("Keep a Trigger’s heatmap on your Home Screen.")
+        .configurationDisplayName("Task heatmap")
+        .description("Keep a Task’s heatmap on your Home Screen.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
 struct SelectTriggerIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Trigger"
-    static var description = IntentDescription("Choose which Trigger heatmap to show.")
+    static var title: LocalizedStringResource = "Task"
+    static var description = IntentDescription("Choose which Task heatmap to show.")
 
-    @Parameter(title: "Trigger")
+    @Parameter(title: "Task")
     var trigger: TriggerEntity?
 }
 
@@ -35,7 +35,7 @@ struct TriggerEntity: AppEntity, Identifiable, Hashable {
     var name: String
     var icon: String
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Trigger"
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Task"
     static var defaultQuery = TriggerEntityQuery()
 
     var displayRepresentation: DisplayRepresentation {
@@ -103,7 +103,7 @@ struct HeatmapTimelineProvider: AppIntentTimelineProvider {
 extension WidgetTriggerSnapshot {
     static let placeholder = WidgetTriggerSnapshot(
         id: "placeholder",
-        name: "Trigger",
+        name: "Task",
         icon: "•",
         accentColorHex: "#2ECC71",
         countsByDay: [:],

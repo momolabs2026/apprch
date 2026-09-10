@@ -112,7 +112,7 @@ final class AuthViewModel: ObservableObject {
             presentTrigger(id: triggerId)
             return
         }
-        linkErrorMessage = "This link isn’t a valid Apprch trigger."
+        linkErrorMessage = "This link isn’t a valid Apprch task."
     }
 
     func clearPendingTrigger() {

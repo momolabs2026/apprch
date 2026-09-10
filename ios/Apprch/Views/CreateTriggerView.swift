@@ -148,7 +148,7 @@ struct CreateTriggerView: View {
                 }
             }
         }
-        .navigationTitle(editing == nil ? "Create a Trigger" : "Edit Trigger")
+        .navigationTitle(editing == nil ? "Create a Task" : "Edit Task")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -167,7 +167,7 @@ struct CreateTriggerView: View {
             Spacer()
             Text(icon)
                 .font(.system(size: 64))
-            Text(name.isEmpty ? "Trigger created" : name)
+            Text(name.isEmpty ? "Task created" : name)
                 .font(.title2.bold())
             Text("Copy this into NFC Tools as a URI (not a website). Tapping the tag opens Apprch and logs it.")
                 .font(.subheadline)
@@ -229,7 +229,7 @@ struct CreateTriggerView: View {
                 "accentColorHex": accentHex
             ]
             if let editing, let id = editing.id {
-                try await Firestore.firestore().collection("triggers").document(id).updateData(payload)
+                try await Firestore.firestore().collection("tasks").document(id).updateData(payload)
                 dismiss()
             } else {
                 var data = payload
@@ -237,7 +237,7 @@ struct CreateTriggerView: View {
                 data["createdByUid"] = uid
                 data["createdAt"] = FieldValue.serverTimestamp()
                 data["eventCount"] = 0
-                let ref = Firestore.firestore().collection("triggers").document()
+                let ref = Firestore.firestore().collection("tasks").document()
                 try await ref.setData(data)
                 createdTriggerId = ref.documentID
             }

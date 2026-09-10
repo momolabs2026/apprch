@@ -20,11 +20,11 @@ Firebase config files (`GoogleService-Info.plist`, `google-services.json`) are g
 The iOS MVP is usable. These are the next useful slices:
 
 - Android NFC write
-- Push notification when another member logs a Trigger
+- Push notification when another member logs a Task
 - Leave a group, and remove a member
 - Universal Links after Apple Developer enrollment
 - Tests around EventStore / GroupStore
-- A streak visualization on Trigger detail
+- A streak visualization on Task detail
 
 ## Project structure
 

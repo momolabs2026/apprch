@@ -1,6 +1,6 @@
 # Apprch
 
-A tap-to-log app for yourself or a group. Create a Trigger, write its link to an NFC tag, and check it off when you tap — as a private reminder, or as a shared log everyone in the group can see.
+A tap-to-log app for yourself or a group. Create a Task, write its link to an NFC tag, and check it off when you tap — as a private reminder, or as a shared log everyone in the group can see.
 
 ---
 
@@ -10,7 +10,7 @@ In a shared household, small tasks turn into “did anyone do it yet?” convers
 
 ## The solution
 
-Create a Trigger — a named event with its own icon, accent color, and history. Use it solo as a visual reminder, or invite a group so everyone sees the same check and heatmap.
+Create a Task — a named event with its own icon, accent color, and history. Use it solo as a visual reminder, or invite a group so everyone sees the same check and heatmap.
 
 ---
 
@@ -22,11 +22,11 @@ This is the slice people can use and build on. It is not the finished product.
 
 - Sign in with email and password
 - Keep a private **Solo** space and one or more **Groups**
-- Create, edit, and move Triggers between spaces
-- Check a Trigger for today (the circle resets each day)
+- Create, edit, and move Tasks between spaces
+- Check a Task for today (the circle resets each day)
 - Write an NFC tag on iOS and tap it to log on iOS or Android
 - See a GitHub-style heatmap plus a short history
-- Pin a Trigger heatmap to the Home Screen as a widget
+- Pin a Task heatmap to the Home Screen as a widget
 - Invite people by search or share code
 - See group members as chips
 - Edit your name, password, profile photo, and appearance
@@ -56,47 +56,57 @@ apprch/
 ### Backend (Firebase)
 
 - **Authentication** — email/password sign-in
-- **Firestore** — groups (spaces), users, triggers, and events
+- **Firestore** — groups (spaces), users, tasks, and events
 - **Hosting** — web fallback at `https://apprch.web.app`
 - **Cloud Functions** — older create/join/log paths; iOS now writes groups and events from the client
 
 ### iOS
 
-SwiftUI: sign in → Solo plus Groups → Trigger list. Tapping an NFC tag opens `apprch://open?id={triggerId}` and logs that Trigger. The heatmap widget extension reads a snapshot the app writes to the App Group `group.com.momo-labs.Apprch`.
+SwiftUI: sign in → Solo plus Groups → Task list. Tapping an NFC tag opens `apprch://open?id={triggerId}` and logs that Task. The heatmap widget extension reads a snapshot the app writes to the App Group `group.com.momo-labs.Apprch`.
 
 ### Android
 
-Jetpack Compose mirrors the iOS spaces and Triggers. A Glance Home Screen widget shows the same heatmap; pin it from a Trigger’s detail page.
+Jetpack Compose mirrors the iOS spaces and Tasks. A Glance Home Screen widget shows the same heatmap; pin it from a Task’s detail page.
 
 ### NFC flow
 
-1. Create a Trigger
+1. Create a Task
 2. Edit it and write the tag (or copy the link)
 3. Tap the tag later — the app opens and logs
 4. Home shows a filled circle for today; the detail page shows the heatmap
-5. Open a Trigger and add its heatmap widget to keep it on the Home Screen
+5. Open a Task and add its heatmap widget to keep it on the Home Screen
 
 On a Personal Team debug build, iOS cannot claim Universal Links, so tags use the custom `apprch://` scheme.
 
 ### Data model
 
+People see **Tasks** in the app. Firestore stores them in `tasks` (document IDs stay the same as the old `triggers` docs, so NFC and `apprch://open?id=` links keep working).
+
 ```
 groups/{groupId}        name, solo, inviteCode?, memberUids[]
 users/{uid}             displayName, photoBase64?, groupIds[], personalGroupId, activeGroupId
-triggers/{triggerId}    groupId, name, icon, notificationMessage, visualizationType, accentColorHex?, eventCount, lastTriggeredAt
-events/{eventId}        groupId, triggerId, triggeredByUid, timestamp
+tasks/{taskId}          groupId, name, icon, notificationMessage, visualizationType, accentColorHex?, eventCount, lastLoggedAt, lastLoggedByUid
+events/{eventId}        groupId, taskId, loggedByUid, timestamp
 inviteCodes/{code}      groupId
 ```
 
 Visualization types in v1: **Log** and **Counter**.
+
+Existing data lives in `triggers` until you copy it. From `backend/functions` after `npm install`:
+
+```bash
+node ../scripts/migrate-triggers-to-tasks.mjs
+```
+
+Then deploy rules and indexes (`firebase deploy --only firestore`) so the apps can read `tasks`.
 
 ---
 
 ## Roadmap
 
 - [x] Phase 1 — Firebase backend
-- [x] Phase 2 — iOS Triggers, spaces, heatmap, profile
-- [x] Phase 3 — Android trigger / space redesign
+- [x] Phase 2 — iOS Tasks, spaces, heatmap, profile
+- [x] Phase 3 — Android task / space redesign
 - [x] Phase 4 — NFC write / read in the iOS app
 - [x] Phase 5 — Heatmap Home Screen widgets
 - [ ] Phase 6 — Calendar / streak / checklist visualizations

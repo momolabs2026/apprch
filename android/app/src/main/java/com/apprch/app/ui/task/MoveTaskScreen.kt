@@ -1,4 +1,4 @@
-package com.apprch.app.ui.trigger
+package com.apprch.app.ui.task
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -25,13 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.apprch.app.data.GroupStore
 import com.apprch.app.model.Space
-import com.apprch.app.model.Trigger
+import com.apprch.app.model.Task
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MoveTriggerScreen(
-    trigger: Trigger,
+fun MoveTaskScreen(
+    task: Task,
     spaces: List<Space>,
     onDismiss: () -> Unit,
     onMoved: (String) -> Unit
@@ -40,12 +40,12 @@ fun MoveTriggerScreen(
     var newGroupName by remember { mutableStateOf("") }
     var isSaving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    val destinations = spaces.filter { it.id != trigger.groupId }
+    val destinations = spaces.filter { it.id != task.groupId }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Share this Trigger") },
+                title = { Text("Share this Task") },
                 navigationIcon = { TextButton(onClick = onDismiss, enabled = !isSaving) { Text("Cancel") } }
             )
         }
@@ -53,7 +53,7 @@ fun MoveTriggerScreen(
         LazyColumn(modifier = Modifier.padding(padding).padding(16.dp)) {
             item {
                 Text(
-                    "This Trigger stays in Solo unless you move it. History moves with it.",
+                    "This Task stays in Solo unless you move it. History moves with it.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -68,7 +68,7 @@ fun MoveTriggerScreen(
                                 isSaving = true
                                 error = null
                                 try {
-                                    GroupStore.moveTrigger(trigger.id, space.id)
+                                    GroupStore.moveTask(task.id, space.id)
                                     onMoved(space.id)
                                 } catch (e: Exception) {
                                     error = GroupStore.userFacingMessage(e)
@@ -94,7 +94,7 @@ fun MoveTriggerScreen(
                                 isSaving = true
                                 error = null
                                 try {
-                                    val id = GroupStore.createGroup(newGroupName, trigger.id)
+                                    val id = GroupStore.createGroup(newGroupName, task.id)
                                     onMoved(id)
                                 } catch (e: Exception) {
                                     error = GroupStore.userFacingMessage(e)
@@ -104,7 +104,7 @@ fun MoveTriggerScreen(
                         },
                         enabled = !isSaving && newGroupName.isNotBlank(),
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                    ) { Text("Create group with this Trigger") }
+                    ) { Text("Create group with this Task") }
                     error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
                 }
             }

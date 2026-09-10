@@ -20,7 +20,7 @@ struct ConfirmEventView: View {
             Group {
                 if loadFailed {
                     ContentUnavailableView(
-                        "This trigger isn’t available",
+                        "This task isn’t available",
                         systemImage: "link.badge.plus",
                         description: Text("It may belong to a different space, or it was deleted.")
                     )
@@ -91,7 +91,7 @@ struct ConfirmEventView: View {
     private func loadTrigger() async {
         do {
             let snapshot = try await Firestore.firestore()
-                .collection("triggers")
+                .collection("tasks")
                 .document(triggerId)
                 .getDocument()
             guard snapshot.exists, let loaded = try? snapshot.data(as: Trigger.self) else {

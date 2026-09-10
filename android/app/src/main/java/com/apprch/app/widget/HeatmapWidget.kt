@@ -55,7 +55,7 @@ private fun HeatmapWidgetContent() {
     val bitmap = HeatmapBitmap.render(snapshot, widthPx, heightPx, isNightMode(context), weeks)
     Image(
         provider = ImageProvider(bitmap),
-        contentDescription = snapshot?.let { "${it.name} heatmap" } ?: "Trigger heatmap",
+        contentDescription = snapshot?.let { "${it.name} heatmap" } ?: "Task heatmap",
         modifier = GlanceModifier.fillMaxSize()
     )
 }

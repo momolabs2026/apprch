@@ -64,7 +64,7 @@ fun GroupSetupScreen(onSignOut: () -> Unit) {
         Text(
             when (mode) {
                 Mode.CHOOSE -> "Solo is a private log for you. A group notifies everyone you invite."
-                Mode.CREATE -> "Triggers are shared with everyone you invite."
+                Mode.CREATE -> "Tasks are shared with everyone you invite."
                 Mode.JOIN -> "Enter the invite code from someone already in the group."
             },
             style = MaterialTheme.typography.bodyMedium,

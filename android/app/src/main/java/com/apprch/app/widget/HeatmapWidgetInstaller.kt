@@ -21,9 +21,9 @@ object HeatmapWidgetInstaller {
         }
     }
 
-    fun bindTrigger(context: Context, appWidgetId: Int, triggerId: String) {
+    fun bindTask(context: Context, appWidgetId: Int, taskId: String) {
         val appContext = context.applicationContext
-        WidgetSnapshotStore.setWidgetTrigger(appContext, appWidgetId, triggerId)
+        WidgetSnapshotStore.setWidgetTrigger(appContext, appWidgetId, taskId)
         CoroutineScope(Dispatchers.IO).launch {
             HeatmapGlanceWidget().updateAll(appContext)
         }

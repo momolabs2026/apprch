@@ -189,7 +189,7 @@ object GroupStore {
         val snapshot = groupRef.get().await()
         val data = snapshot.data ?: throw IllegalStateException("Couldn’t load this space.")
         if (data["solo"] == true) {
-            throw IllegalStateException("Invite from a group, or move a Trigger into a new group.")
+            throw IllegalStateException("Invite from a group, or move a Task into a new group.")
         }
         val members = data["memberUids"] as? List<*> ?: emptyList<Any>()
         if (!members.contains(me)) throw IllegalStateException("Couldn’t load this space.")
@@ -207,7 +207,7 @@ object GroupStore {
         val members = data["memberUids"] as? List<*> ?: emptyList<Any>()
         if (!members.contains(uid)) throw IllegalStateException("Couldn’t load this group.")
         if (data["solo"] as? Boolean == true) {
-            throw IllegalStateException("Invite from a group, or move a Trigger into a new group.")
+            throw IllegalStateException("Invite from a group, or move a Task into a new group.")
         }
         val existing = (data["inviteCode"] as? String)?.trim()
         if (!existing.isNullOrEmpty()) return existing
@@ -230,21 +230,21 @@ object GroupStore {
         return Triple(code, data["solo"] as? Boolean ?: false, data["name"] as? String ?: "")
     }
 
-    suspend fun moveTrigger(triggerId: String, toGroupId: String) {
+    suspend fun moveTask(taskId: String, toGroupId: String) {
         FirebaseAuth.getInstance().currentUser
             ?: throw IllegalStateException("Please sign in again.")
         val db = FirebaseFirestore.getInstance()
-        val triggerRef = db.collection("triggers").document(triggerId)
-        val trigger = triggerRef.get().await()
-        if (!trigger.exists()) throw IllegalStateException("Couldn’t load this space.")
-        val fromGroupId = trigger.getString("groupId")
+        val taskRef = db.collection("tasks").document(taskId)
+        val task = taskRef.get().await()
+        if (!task.exists()) throw IllegalStateException("Couldn’t load this space.")
+        val fromGroupId = task.getString("groupId")
             ?: throw IllegalStateException("Couldn’t load this space.")
         if (fromGroupId == toGroupId) return
-        triggerRef.update("groupId", toGroupId).await()
+        taskRef.update("groupId", toGroupId).await()
 
         val events = db.collection("events")
             .whereEqualTo("groupId", fromGroupId)
-            .whereEqualTo("triggerId", triggerId)
+            .whereEqualTo("taskId", taskId)
             .get()
             .await()
         if (events.isEmpty) return
@@ -253,13 +253,13 @@ object GroupStore {
         batch.commit().await()
     }
 
-    suspend fun createGroup(named: String, movingTriggerId: String?): String {
+    suspend fun createGroup(named: String, movingTaskId: String?): String {
         val trimmed = named.trim()
         if (trimmed.isEmpty()) throw IllegalStateException("Give the group a name first.")
         ensurePersonal()
         val groupId = createSpace(name = trimmed, solo = false, makeActive = true)
-        if (movingTriggerId != null) {
-            moveTrigger(movingTriggerId, groupId)
+        if (movingTaskId != null) {
+            moveTask(movingTaskId, groupId)
         }
         return groupId
     }

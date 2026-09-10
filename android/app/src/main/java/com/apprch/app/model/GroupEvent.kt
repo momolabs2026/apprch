@@ -5,7 +5,7 @@ import java.util.Date
 data class GroupEvent(
     val id: String,
     val type: String,
-    val triggeredByUid: String,
+    val loggedByUid: String,
     val timestamp: Date
 ) {
     val displayName: String

@@ -10,14 +10,14 @@ import kotlinx.coroutines.tasks.await
 import java.util.Date
 
 object EventStore {
-    suspend fun log(triggerId: String, groupId: String) {
+    suspend fun log(taskId: String, groupId: String) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid
             ?: throw IllegalStateException("Please sign in again.")
         val db = FirebaseFirestore.getInstance()
-        val triggerRef = db.collection("triggers").document(triggerId)
-        val snapshot = triggerRef.get().await()
+        val taskRef = db.collection("tasks").document(taskId)
+        val snapshot = taskRef.get().await()
         if (!snapshot.exists() || snapshot.getString("groupId") != groupId) {
-            throw IllegalStateException("This trigger isn’t available.")
+            throw IllegalStateException("This task isn’t available.")
         }
 
         val batch = db.batch()
@@ -25,40 +25,40 @@ object EventStore {
             db.collection("events").document(),
             mapOf(
                 "groupId" to groupId,
-                "triggerId" to triggerId,
-                "triggeredByUid" to uid,
+                "taskId" to taskId,
+                "loggedByUid" to uid,
                 "timestamp" to FieldValue.serverTimestamp()
             )
         )
         batch.update(
-            triggerRef,
+            taskRef,
             mapOf(
-                "lastTriggeredAt" to FieldValue.serverTimestamp(),
-                "lastTriggeredByUid" to uid,
+                "lastLoggedAt" to FieldValue.serverTimestamp(),
+                "lastLoggedByUid" to uid,
                 "eventCount" to FieldValue.increment(1)
             )
         )
         batch.commit().await()
-        WidgetSnapshotSync.refreshTrigger(ApprchApplication.appContext, triggerId, groupId)
+        WidgetSnapshotSync.refreshTask(ApprchApplication.appContext, taskId, groupId)
     }
 
-    suspend fun toggleToday(triggerId: String, groupId: String, currentlyComplete: Boolean) {
-        if (currentlyComplete) undoToday(triggerId, groupId) else log(triggerId, groupId)
+    suspend fun toggleToday(taskId: String, groupId: String, currentlyComplete: Boolean) {
+        if (currentlyComplete) undoToday(taskId, groupId) else log(taskId, groupId)
     }
 
-    suspend fun undoToday(triggerId: String, groupId: String) {
+    suspend fun undoToday(taskId: String, groupId: String) {
         FirebaseAuth.getInstance().currentUser
             ?: throw IllegalStateException("Please sign in again.")
         val db = FirebaseFirestore.getInstance()
-        val triggerRef = db.collection("triggers").document(triggerId)
-        val snapshot = triggerRef.get().await()
+        val taskRef = db.collection("tasks").document(taskId)
+        val snapshot = taskRef.get().await()
         if (!snapshot.exists() || snapshot.getString("groupId") != groupId) {
-            throw IllegalStateException("This trigger isn’t available.")
+            throw IllegalStateException("This task isn’t available.")
         }
 
         val events = db.collection("events")
             .whereEqualTo("groupId", groupId)
-            .whereEqualTo("triggerId", triggerId)
+            .whereEqualTo("taskId", taskId)
             .get()
             .await()
 
@@ -86,15 +86,16 @@ object EventStore {
             "eventCount" to maxOf(0, currentCount - today.size)
         )
         if (latestEarlier != null) {
-            latestEarlier.getTimestamp("timestamp")?.let { update["lastTriggeredAt"] = it }
-            latestEarlier.getString("triggeredByUid")?.let { update["lastTriggeredByUid"] = it }
+            latestEarlier.getTimestamp("timestamp")?.let { update["lastLoggedAt"] = it }
+            (latestEarlier.getString("loggedByUid") ?: latestEarlier.getString("triggeredByUid"))
+                ?.let { update["lastLoggedByUid"] = it }
         } else {
-            update["lastTriggeredAt"] = FieldValue.delete()
-            update["lastTriggeredByUid"] = FieldValue.delete()
+            update["lastLoggedAt"] = FieldValue.delete()
+            update["lastLoggedByUid"] = FieldValue.delete()
         }
-        batch.update(triggerRef, update)
+        batch.update(taskRef, update)
         batch.commit().await()
-        WidgetSnapshotSync.refreshTrigger(ApprchApplication.appContext, triggerId, groupId)
+        WidgetSnapshotSync.refreshTask(ApprchApplication.appContext, taskId, groupId)
     }
 
     fun userFacingMessage(error: Throwable): String {

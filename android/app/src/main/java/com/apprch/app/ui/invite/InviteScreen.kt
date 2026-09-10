@@ -104,7 +104,7 @@ fun InviteScreen(groupId: String, onDismiss: () -> Unit) {
         when {
             isLoading -> CircularProgressIndicator(Modifier.padding(padding).padding(24.dp))
             isSolo -> Text(
-                "Solo stays private. Open a Trigger and share it into a group.",
+                "Solo stays private. Open a Task and share it into a group.",
                 modifier = Modifier.padding(padding).padding(24.dp)
             )
             error != null -> Text(error!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(padding).padding(24.dp))

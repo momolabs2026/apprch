@@ -5,7 +5,7 @@ import com.google.firebase.Timestamp
 import java.util.Calendar
 import java.util.Date
 
-data class Trigger(
+data class Task(
     val id: String,
     val groupId: String,
     val name: String,
@@ -14,30 +14,30 @@ data class Trigger(
     val visualizationType: String,
     val createdByUid: String,
     val createdAt: Date? = null,
-    val lastTriggeredAt: Date? = null,
-    val lastTriggeredByUid: String? = null,
+    val lastLoggedAt: Date? = null,
+    val lastLoggedByUid: String? = null,
     val eventCount: Int = 0,
     val accentColorHex: String? = null
 ) {
     val visualization: String get() = if (visualizationType == "counter") "counter" else "log"
 
     val isCompletedToday: Boolean
-        get() = lastTriggeredAt?.let { isSameDay(it, Date()) } == true
+        get() = lastLoggedAt?.let { isSameDay(it, Date()) } == true
 
-    val accent: Color get() = colorFromHex(accentColorHex ?: TriggerAccent.fallbackHex)
+    val accent: Color get() = colorFromHex(accentColorHex ?: TaskAccent.fallbackHex)
 
     val tagUrl: String get() = "apprch://open?id=$id"
 }
 
-data class TriggerEvent(
+data class TaskEvent(
     val id: String,
     val groupId: String,
-    val triggerId: String,
-    val triggeredByUid: String,
+    val taskId: String,
+    val loggedByUid: String,
     val date: Date
 )
 
-object TriggerAccent {
+object TaskAccent {
     const val fallbackHex = "#2ECC71"
     val presets = listOf(
         "#2ECC71", "#3498DB", "#9B59B6", "#E74C3C",

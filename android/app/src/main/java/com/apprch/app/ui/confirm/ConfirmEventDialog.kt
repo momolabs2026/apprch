@@ -22,18 +22,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.tasks.await
 
 @Composable
-fun ConfirmEventDialog(triggerId: String, onDismiss: () -> Unit) {
+fun ConfirmEventDialog(taskId: String, onDismiss: () -> Unit) {
     var isSending by remember { mutableStateOf(true) }
     var didSend by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var title by remember { mutableStateOf("Trigger") }
+    var title by remember { mutableStateOf("Task") }
 
-    LaunchedEffect(triggerId) {
+    LaunchedEffect(taskId) {
         try {
-            val doc = FirebaseFirestore.getInstance().collection("triggers").document(triggerId).get().await()
-            val groupId = doc.getString("groupId") ?: throw IllegalStateException("This trigger isn’t available.")
-            title = listOfNotNull(doc.getString("icon"), doc.getString("name")).joinToString(" ").ifBlank { "Trigger" }
-            EventStore.log(triggerId, groupId)
+            val doc = FirebaseFirestore.getInstance().collection("tasks").document(taskId).get().await()
+            val groupId = doc.getString("groupId") ?: throw IllegalStateException("This task isn’t available.")
+            title = listOfNotNull(doc.getString("icon"), doc.getString("name")).joinToString(" ").ifBlank { "Task" }
+            EventStore.log(taskId, groupId)
             didSend = true
         } catch (e: Exception) {
             errorMessage = EventStore.userFacingMessage(e)

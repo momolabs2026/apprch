@@ -1,7 +1,7 @@
 package com.apprch.app.widget
 
 import android.content.Context
-import com.apprch.app.model.TriggerAccent
+import com.apprch.app.model.TaskAccent
 import com.apprch.app.model.startOfDay
 import org.json.JSONArray
 import org.json.JSONObject
@@ -131,7 +131,7 @@ object WidgetSnapshotStore {
             id = id,
             name = name,
             icon = icon,
-            accentColorHex = accentColorHex ?: TriggerAccent.fallbackHex,
+            accentColorHex = accentColorHex ?: TaskAccent.fallbackHex,
             countsByDay = counts,
             yearTotal = yearTotal,
             todayCount = todayCount
@@ -158,11 +158,12 @@ object WidgetSnapshotStore {
                 }
             )
         }
-        return JSONObject().put("triggers", array).toString()
+        return JSONObject().put("tasks", array).toString()
     }
 
     private fun decode(raw: String): List<WidgetTriggerSnapshot> {
-        val array = JSONObject(raw).optJSONArray("triggers") ?: return emptyList()
+        val json = JSONObject(raw)
+        val array = json.optJSONArray("tasks") ?: json.optJSONArray("triggers") ?: return emptyList()
         return buildList {
             for (i in 0 until array.length()) {
                 val obj = array.getJSONObject(i)
@@ -174,7 +175,7 @@ object WidgetSnapshotStore {
                         id = obj.getString("id"),
                         name = obj.getString("name"),
                         icon = obj.optString("icon"),
-                        accentColorHex = obj.optString("accentColorHex", TriggerAccent.fallbackHex),
+                        accentColorHex = obj.optString("accentColorHex", TaskAccent.fallbackHex),
                         countsByDay = counts,
                         yearTotal = obj.optInt("yearTotal"),
                         todayCount = obj.optInt("todayCount")

@@ -19,7 +19,7 @@ struct MoveTriggerView: View {
         NavigationStack {
             List {
                 Section {
-                    Text("This Trigger stays in Solo unless you move it. History moves with it.")
+                    Text("This Task stays in Solo unless you move it. History moves with it.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
@@ -40,7 +40,7 @@ struct MoveTriggerView: View {
 
                 Section("Or create a new group") {
                     TextField("Group name (e.g. The Delfinos)", text: $newGroupName)
-                    Button("Create group with this Trigger") {
+                    Button("Create group with this Task") {
                         Task { await createGroup() }
                     }
                     .disabled(isSaving || newGroupName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -52,7 +52,7 @@ struct MoveTriggerView: View {
                     }
                 }
             }
-            .navigationTitle("Share this Trigger")
+            .navigationTitle("Share this Task")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

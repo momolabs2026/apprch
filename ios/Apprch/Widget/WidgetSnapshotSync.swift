@@ -28,7 +28,7 @@ enum WidgetSnapshotSync {
     static func refreshTrigger(id: String, groupId: String) async {
         guard Auth.auth().currentUser != nil else { return }
         let db = Firestore.firestore()
-        guard let doc = try? await db.collection("triggers").document(id).getDocument(),
+        guard let doc = try? await db.collection("tasks").document(id).getDocument(),
               let trigger = try? doc.data(as: Trigger.self),
               trigger.groupId == groupId,
               let snapshot = await loadSnapshot(for: trigger) else { return }
@@ -37,7 +37,7 @@ enum WidgetSnapshotSync {
 
     private static func loadSnapshots(in groupId: String) async -> [WidgetTriggerSnapshot] {
         let db = Firestore.firestore()
-        guard let snap = try? await db.collection("triggers")
+        guard let snap = try? await db.collection("tasks")
             .whereField("groupId", isEqualTo: groupId)
             .getDocuments() else { return [] }
         let triggers = snap.documents.compactMap { try? $0.data(as: Trigger.self) }
@@ -55,7 +55,7 @@ enum WidgetSnapshotSync {
         let db = Firestore.firestore()
         let eventsSnap = try? await db.collection("events")
             .whereField("groupId", isEqualTo: trigger.groupId)
-            .whereField("triggerId", isEqualTo: id)
+            .whereField("taskId", isEqualTo: id)
             .limit(to: 400)
             .getDocuments()
         let dates = eventsSnap?.documents.compactMap { doc -> Date? in

@@ -59,7 +59,7 @@ service cloud.firestore {
       allow list, update, delete: if false;
     }
 
-    match /triggers/{triggerId} {
+    match /tasks/{taskId} {
       allow read: if isMemberOf(resource.data.groupId);
       allow create: if isMemberOf(request.resource.data.groupId)
         && request.resource.data.createdByUid == request.auth.uid;
@@ -74,8 +74,8 @@ service cloud.firestore {
     match /events/{eventId} {
       allow read: if isMemberOf(resource.data.groupId);
       allow create: if isMemberOf(request.resource.data.groupId)
-        && request.resource.data.triggerId is string
-        && request.resource.data.triggeredByUid == request.auth.uid;
+        && request.resource.data.taskId is string
+        && request.resource.data.loggedByUid == request.auth.uid;
       allow update: if isMemberOf(resource.data.groupId)
         && isMemberOf(request.resource.data.groupId)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['groupId']);

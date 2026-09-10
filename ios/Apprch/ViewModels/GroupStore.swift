@@ -307,19 +307,19 @@ enum GroupStore {
             throw GroupStoreError.signedOut
         }
         let db = Firestore.firestore()
-        let triggerRef = db.collection("triggers").document(triggerId)
-        let triggerSnap = try await triggerRef.getDocument()
-        guard triggerSnap.exists else { throw GroupStoreError.unavailable }
-        guard let fromGroupId = triggerSnap.data()?["groupId"] as? String else {
+        let taskRef = db.collection("tasks").document(triggerId)
+        let taskSnap = try await taskRef.getDocument()
+        guard taskSnap.exists else { throw GroupStoreError.unavailable }
+        guard let fromGroupId = taskSnap.data()?["groupId"] as? String else {
             throw GroupStoreError.unavailable
         }
         guard fromGroupId != toGroupId else { return }
 
-        try await triggerRef.updateData(["groupId": toGroupId])
+        try await taskRef.updateData(["groupId": toGroupId])
 
         let events = try await db.collection("events")
             .whereField("groupId", isEqualTo: fromGroupId)
-            .whereField("triggerId", isEqualTo: triggerId)
+            .whereField("taskId", isEqualTo: triggerId)
             .getDocuments()
         guard !events.documents.isEmpty else { return }
 
@@ -416,7 +416,7 @@ enum GroupStoreError: LocalizedError {
         switch self {
         case .signedOut: return "Please sign in again."
         case .invalidCode: return "That invite code isn’t valid."
-        case .soloSpace: return "Invite from a group, or move a Trigger into a new group."
+        case .soloSpace: return "Invite from a group, or move a Task into a new group."
         case .unavailable: return "Couldn’t load this space."
         case .needsName: return "Give the group a name first."
         case .alreadyMember: return "They’re already in this group."

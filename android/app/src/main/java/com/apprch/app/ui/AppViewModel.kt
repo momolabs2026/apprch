@@ -35,8 +35,8 @@ class AppViewModel : ViewModel() {
     private val _state = MutableStateFlow<AppState>(AppState.Loading)
     val state: StateFlow<AppState> = _state.asStateFlow()
 
-    private val _pendingTriggerId = MutableStateFlow<String?>(null)
-    val pendingTriggerId: StateFlow<String?> = _pendingTriggerId.asStateFlow()
+    private val _pendingTaskId = MutableStateFlow<String?>(null)
+    val pendingTaskId: StateFlow<String?> = _pendingTaskId.asStateFlow()
 
     private var userListener: ListenerRegistration? = null
     private var isMigrating = false
@@ -65,12 +65,12 @@ class AppViewModel : ViewModel() {
         userListener?.remove()
     }
 
-    fun setPendingTrigger(id: String) {
-        _pendingTriggerId.value = id
+    fun setPendingTask(id: String) {
+        _pendingTaskId.value = id
     }
 
-    fun clearPendingTrigger() {
-        _pendingTriggerId.value = null
+    fun clearPendingTask() {
+        _pendingTaskId.value = null
     }
 
     fun signOut() {

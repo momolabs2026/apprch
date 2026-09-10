@@ -1,4 +1,4 @@
-package com.apprch.app.ui.trigger
+package com.apprch.app.ui.task
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,14 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.apprch.app.model.TriggerEvent
+import com.apprch.app.model.TaskEvent
 import com.apprch.app.model.heatmapFill
 import com.apprch.app.model.startOfDay
 import java.util.Calendar
 import java.util.Date
 
 @Composable
-fun ContributionGraph(events: List<TriggerEvent>, accent: Color) {
+fun ContributionGraph(events: List<TaskEvent>, accent: Color) {
     val calendar = Calendar.getInstance()
     val days = remember { daysInPastYear(calendar) }
     val counts = remember(events) {

@@ -341,6 +341,22 @@ enum GroupStore {
         }
         return groupId
     }
+    
+    static func renameGroup(groupId: String, to name: String) async throws {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmed.isEmpty else {
+            throw GroupStoreError.needsName
+        }
+        
+        let db = Firestore.firestore()
+        
+        try await db
+            .collection("groups")
+            .document(groupId)
+            .updateData(["name": trimmed
+                        ])
+    }
 
     static func userFacingMessage(for error: Error) -> String {
         if let storeError = error as? GroupStoreError {

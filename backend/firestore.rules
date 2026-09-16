@@ -47,6 +47,13 @@ service cloud.firestore {
             && request.resource.data.inviteCode.size() == 6
             && !('inviteCode' in resource.data)
           )
+          || ( resource.data.solo != true
+            && request.resource.data.solo != true
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['name'])
+            && request.resource.data.name is string
+            && request.resource.data.name.size() > 0
+          )
         );
       allow delete: if false;
     }

@@ -192,6 +192,7 @@ private struct TriggerListView: View {
     @State private var showingInvite = false
     @State private var togglingId: String?
     @State private var toggleError: String?
+    @State private var showingRename = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -245,6 +246,16 @@ private struct TriggerListView: View {
                         Label("Invite", systemImage: "person.badge.plus")
                     }
                 }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showingRename = true
+                        } label: {
+                            Label("Rename Group", systemImage: "pencil")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -252,10 +263,14 @@ private struct TriggerListView: View {
                 } label: {
                     Label("Create a Task", systemImage: "plus")
                 }
+        
             }
         }
         .sheet(isPresented: $showingCreate) {
             CreateTriggerView(groupId: space.id, solo: space.solo)
+        }
+        .sheet(isPresented: $showingRename) {
+            RenameGroupSheet(groupId: space.id,currentName:space.title)
         }
         .sheet(isPresented: $showingInvite) {
             InviteGroupView(groupId: space.id)
@@ -276,8 +291,62 @@ private struct TriggerListView: View {
         }
         .onDisappear { listener?.remove() }
     }
-
-    private func toggleToday(_ trigger: Trigger) async {
+    private struct RenameGroupSheet: View {
+        let groupId: String
+        let currentName: String
+        
+        @Environment(\.dismiss) private var dismiss
+        @EnvironmentObject var authVM: AuthViewModel
+        @State private var name = ""
+        @State private var errorMessage: String?
+        
+        init(groupId: String,currentName: String) {
+            self.groupId = groupId
+            self.currentName = currentName
+            _name = State(initialValue: currentName)
+        }
+        
+        var body: some View {
+            NavigationStack {
+                Form {
+                    TextField("Group name",text:$name)
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                }
+                .navigationTitle("Rename Group")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") {
+                            dismiss()
+                        }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            Task {
+                                do {
+                                    print("Atempting rename",groupId, name)
+                                    try await GroupStore.renameGroup(
+                                        groupId: groupId,
+                                        to: name
+                                    )
+                                    print("rename succeeded")
+                                    await authVM.refreshSpaces()
+                                    dismiss()
+                                } catch {
+                                    errorMessage = GroupStore.userFacingMessage(for: error)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+       private func toggleToday(_ trigger: Trigger) async {
         guard let id = trigger.id else { return }
         togglingId = id
         do {

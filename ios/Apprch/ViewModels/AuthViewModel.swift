@@ -46,6 +46,22 @@ final class AuthViewModel: ObservableObject {
         if let h = authListener { Auth.auth().removeStateDidChangeListener(h) }
         userListener?.remove()
     }
+    
+    func refreshSpaces() async {
+        // this is for refreshing the state after changing the group name
+        // temp untill a better fix is found
+        
+        guard case .ready(let active, _) = state else {
+                return
+        }
+        let spaces = (try? await GroupStore.spaces()) ?? []
+        
+        guard let refreshedActive = spaces.first(where: { $0.id == active.id}) else {
+            return
+            
+        }
+        state = .ready(active: refreshedActive, spaces: spaces)
+    }
 
     func signUp(email: String, password: String, displayName: String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)

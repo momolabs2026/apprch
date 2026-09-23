@@ -47,6 +47,13 @@ final class AuthViewModel: ObservableObject {
         userListener?.remove()
     }
 
+    func refreshSpaces() async {
+        guard case .ready(let active, _) = state else { return }
+        let spaces = (try? await GroupStore.spaces()) ?? []
+        guard let refreshedActive = spaces.first(where: { $0.id == active.id }) else { return }
+        state = .ready(active: refreshedActive, spaces: spaces)
+    }
+
     func signUp(email: String, password: String, displayName: String) async throws {
         let result = try await Auth.auth().createUser(withEmail: email, password: password)
         let changeRequest = result.user.createProfileChangeRequest()

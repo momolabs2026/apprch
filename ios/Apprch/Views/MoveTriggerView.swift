@@ -40,6 +40,12 @@ struct MoveTriggerView: View {
 
                 Section("Or create a new group") {
                     TextField("Group name (e.g. The Delfinos)", text: $newGroupName)
+                        .onChange(of: newGroupName) { _, newValue in
+                            if newValue.count > GroupStore.maxNameLength {
+                                newGroupName = GroupStore.limitName(newValue)
+                                errorMessage = "Group name is too long!"
+                            }
+                        }
                     Button("Create group with this Task") {
                         Task { await createGroup() }
                     }

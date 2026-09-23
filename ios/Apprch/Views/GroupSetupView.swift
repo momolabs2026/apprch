@@ -59,6 +59,12 @@ struct GroupSetupView: View {
                     VStack(spacing: 16) {
                         TextField("Group name (e.g. The Delfinos)", text: $groupName)
                             .textFieldStyle(.roundedBorder)
+                            .onChange(of: groupName) { _, newValue in
+                                if newValue.count > GroupStore.maxNameLength {
+                                    groupName = GroupStore.limitName(newValue)
+                                    errorMessage = "Group name is too long!"
+                                }
+                            }
 
                         errorLabel
                         submitButton("Create group") { await createGroup() }

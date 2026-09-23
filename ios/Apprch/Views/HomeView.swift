@@ -192,6 +192,7 @@ private struct TriggerListView: View {
     @State private var showingInvite = false
     @State private var togglingId: String?
     @State private var toggleError: String?
+    @State private var showingRename = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -245,6 +246,14 @@ private struct TriggerListView: View {
                         Label("Invite", systemImage: "person.badge.plus")
                     }
                 }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showingRename = true
+                    } label: {
+                        Label("Rename Group", systemImage: "pencil")
+                    }
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
@@ -256,6 +265,9 @@ private struct TriggerListView: View {
         }
         .sheet(isPresented: $showingCreate) {
             CreateTriggerView(groupId: space.id, solo: space.solo)
+        }
+        .sheet(isPresented: $showingRename) {
+            RenameGroupSheet(groupId: space.id, currentName: space.title)
         }
         .sheet(isPresented: $showingInvite) {
             InviteGroupView(groupId: space.id)
@@ -326,6 +338,81 @@ private struct TriggerListView: View {
     }
 }
 
+private struct RenameGroupSheet: View {
+    let groupId: String
+    let currentName: String
+
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var authVM: AuthViewModel
+    @State private var name: String
+    @State private var validationMessage: String?
+    @State private var saveError: String?
+
+    init(groupId: String, currentName: String) {
+        self.groupId = groupId
+        self.currentName = currentName
+        _name = State(initialValue: currentName)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Group name", text: $name)
+                    .onChange(of: name) { _, newValue in
+                        if newValue.count > GroupStore.maxNameLength {
+                            name = GroupStore.limitName(newValue)
+                            validationMessage = "Group name is too long!"
+                        }
+                    }
+                if let validationMessage {
+                    Text(validationMessage)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                }
+            }
+            .navigationTitle("Rename Group")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        Task { await save() }
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .alert("Couldn’t update", isPresented: Binding(
+                get: { saveError != nil },
+                set: { if !$0 { saveError = nil } }
+            )) {
+                Button("OK", role: .cancel) { saveError = nil }
+            } message: {
+                Text(saveError ?? "")
+            }
+        }
+    }
+
+    private func save() async {
+        validationMessage = nil
+        do {
+            try await GroupStore.renameGroup(groupId: groupId, to: name)
+            await authVM.refreshSpaces()
+            dismiss()
+        } catch let error as GroupStoreError {
+            switch error {
+            case .nameTooLong, .needsName:
+                validationMessage = error.localizedDescription
+            default:
+                saveError = error.localizedDescription
+            }
+        } catch {
+            saveError = GroupStore.userFacingMessage(for: error)
+        }
+    }
+}
+
 private struct AddGroupSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var name = ""
@@ -337,6 +424,12 @@ private struct AddGroupSheet: View {
             Form {
                 Section("This stays next to your Solo space") {
                     TextField("Group name (e.g. The Delfinos)", text: $name)
+                        .onChange(of: name) { _, newValue in
+                            if newValue.count > GroupStore.maxNameLength {
+                                name = GroupStore.limitName(newValue)
+                                errorMessage = "Group name is too long!"
+                            }
+                        }
                 }
                 if let errorMessage {
                     Section { Text(errorMessage).foregroundStyle(.red).font(.caption) }

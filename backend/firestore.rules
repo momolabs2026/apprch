@@ -27,6 +27,7 @@ service cloud.firestore {
         && request.auth.uid in request.resource.data.memberUids
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 32
         && request.resource.data.solo is bool;
       allow update: if signedIn()
         && request.auth.uid in resource.data.memberUids
@@ -47,12 +48,14 @@ service cloud.firestore {
             && request.resource.data.inviteCode.size() == 6
             && !('inviteCode' in resource.data)
           )
-          || ( resource.data.solo != true
+          || (
+            resource.data.solo != true
             && request.resource.data.solo != true
             && request.resource.data.diff(resource.data).affectedKeys()
               .hasOnly(['name'])
             && request.resource.data.name is string
             && request.resource.data.name.size() > 0
+            && request.resource.data.name.size() <= 32
           )
         );
       allow delete: if false;

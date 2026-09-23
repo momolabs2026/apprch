@@ -3,11 +3,14 @@ import FirebaseAuth
 import FirebaseFirestore
 
 enum GroupStore {
+    static let maxNameLength = 32
+
     static func create(name: String, solo: Bool) async throws {
         if !solo {
             _ = try await ensurePersonal()
         }
-        _ = try await createSpace(name: name, solo: solo, makeActive: true)
+        let resolved = solo ? name : try validatedName(name)
+        _ = try await createSpace(name: resolved, solo: solo, makeActive: true)
     }
 
     @discardableResult
@@ -332,8 +335,7 @@ enum GroupStore {
 
     @discardableResult
     static func createGroup(named name: String, movingTriggerId triggerId: String?) async throws -> String {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { throw GroupStoreError.needsName }
+        let trimmed = try validatedName(name)
         _ = try await ensurePersonal()
         let groupId = try await createSpace(name: trimmed, solo: false, makeActive: true)
         if let triggerId {
@@ -341,21 +343,25 @@ enum GroupStore {
         }
         return groupId
     }
-    
+
     static func renameGroup(groupId: String, to name: String) async throws {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        guard !trimmed.isEmpty else {
-            throw GroupStoreError.needsName
-        }
-        
-        let db = Firestore.firestore()
-        
-        try await db
+        let trimmed = try validatedName(name)
+        try await Firestore.firestore()
             .collection("groups")
             .document(groupId)
-            .updateData(["name": trimmed
-                        ])
+            .updateData(["name": trimmed])
+    }
+
+    static func limitName(_ value: String) -> String {
+        guard value.count > maxNameLength else { return value }
+        return String(value.prefix(maxNameLength))
+    }
+
+    private static func validatedName(_ name: String) throws -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw GroupStoreError.needsName }
+        guard trimmed.count <= maxNameLength else { throw GroupStoreError.nameTooLong }
+        return trimmed
     }
 
     static func userFacingMessage(for error: Error) -> String {
@@ -426,6 +432,7 @@ enum GroupStoreError: LocalizedError {
     case soloSpace
     case unavailable
     case needsName
+    case nameTooLong
     case alreadyMember
 
     var errorDescription: String? {
@@ -435,6 +442,7 @@ enum GroupStoreError: LocalizedError {
         case .soloSpace: return "Invite from a group, or move a Task into a new group."
         case .unavailable: return "Couldn’t load this space."
         case .needsName: return "Give the group a name first."
+        case .nameTooLong: return "Group name is too long!"
         case .alreadyMember: return "They’re already in this group."
         }
     }

@@ -62,7 +62,7 @@ apprch/
 
 ### iOS
 
-SwiftUI: sign in → Solo plus Groups → Task list. Tapping an NFC tag opens `apprch://open?id={triggerId}` and logs that Task. The heatmap widget extension reads a snapshot the app writes to the App Group `group.com.momo-labs.Apprch`.
+SwiftUI: sign in → Solo plus Groups → Task list. Tapping an NFC tag opens `apprch://open?id={triggerId}` and logs that Task. The heatmap widget extension reads a snapshot the app writes to the App Group `group.com.momo-labs.apprch.shared`.
 
 ### Android
 

@@ -108,7 +108,7 @@ private fun levelFor(count: Int) = when (count) {
 }
 
 private fun weekdayName(index: Int): String {
-    val symbols = Calendar.getInstance().getDisplayNames(Calendar.DAY_OF_WEEK, Calendar.NARROW, java.util.Locale.getDefault())
+    val symbols = Calendar.getInstance().getDisplayNames(Calendar.DAY_OF_WEEK, Calendar.NARROW_STANDALONE, java.util.Locale.getDefault())
         ?.entries?.sortedBy { it.value }?.map { it.key } ?: listOf("S", "M", "T", "W", "T", "F", "S")
     return symbols.getOrElse(index) { "" }
 }

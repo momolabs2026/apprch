@@ -207,7 +207,7 @@ fun ProfileScreen(onDismiss: () -> Unit, onSignOut: () -> Unit) {
                                 error = null
                                 try {
                                     val email = user?.email ?: throw IllegalStateException("Please sign in again.")
-                                    val credential = EmailAuthProvider.credential(email, currentPassword)
+                                    val credential = EmailAuthProvider.getCredential(email, currentPassword)
                                     user.reauthenticate(credential).await()
                                     currentPassword = ""
                                     passwordStep = PasswordStep.New

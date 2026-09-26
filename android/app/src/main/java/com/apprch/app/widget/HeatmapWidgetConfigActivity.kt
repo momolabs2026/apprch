@@ -61,10 +61,11 @@ class HeatmapWidgetConfigActivity : ComponentActivity() {
                 val state by viewModel.state.collectAsState()
 
                 LaunchedEffect(state) {
-                    if (state is AppState.Ready) {
+                    val ready = state
+                    if (ready is AppState.Ready) {
                         WidgetSnapshotSync.refresh(
                             this@HeatmapWidgetConfigActivity,
-                            state.spaces.map { it.id }
+                            ready.spaces.map { it.id }
                         )
                         triggers = WidgetSnapshotStore.load(this@HeatmapWidgetConfigActivity)
                     }

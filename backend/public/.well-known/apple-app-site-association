@@ -3,11 +3,11 @@
     "apps": [],
     "details": [
       {
-        "appID": "FX6V3N3UKW.com.momo-labs.Apprch",
+        "appID": "BWVF6H8HMY.com.momo-labs.Apprch",
         "paths": ["/t/*"]
       },
       {
-        "appIDs": ["FX6V3N3UKW.com.momo-labs.Apprch"],
+        "appIDs": ["BWVF6H8HMY.com.momo-labs.Apprch"],
         "components": [
           { "/": "/t/*" }
         ]

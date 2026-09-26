@@ -2,7 +2,7 @@ import Foundation
 import WidgetKit
 
 enum WidgetSharing {
-    static let appGroupID = "group.com.momo-labs.Apprch"
+    static let appGroupID = "group.com.momo-labs.apprch.shared"
     static let snapshotsKey = "widget.snapshots"
     static let preferredTriggerKey = "widget.preferredTriggerId"
 

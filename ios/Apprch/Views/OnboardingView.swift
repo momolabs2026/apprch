@@ -57,8 +57,9 @@ struct OnboardingView: View {
                 pager(side: side)
                     .frame(height: side + 24 + titleHeight)
                     .opacity(appeared ? 1 : 0)
-                    .scaleEffect(appeared || reduceMotion ? 1 : 0.9, anchor: .bottom)
-                    .animation(.spring(duration: 0.7, bounce: 0.3), value: appeared)
+                    .scaleEffect(appeared || reduceMotion ? 1 : 0.35, anchor: .bottom)
+                    .offset(y: appeared || reduceMotion ? 0 : bottomInset * 0.6)
+                    .animation(.spring(duration: 0.8, bounce: 0.3), value: appeared)
 
                 PageDots(
                     count: OnboardingStep.allCases.count,
@@ -74,7 +75,7 @@ struct OnboardingView: View {
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .onAppear { appeared = true }
-        .onChange(of: current) { appi.hop() }
+        .onChange(of: current) { appi.beam() }
         .task(id: AutoAdvance(step: current, isPaused: isInteracting || voiceOverEnabled)) {
             guard !isInteracting, !voiceOverEnabled else { return }
             try? await Task.sleep(for: Self.stepDuration)

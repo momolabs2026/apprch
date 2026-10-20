@@ -1,25 +1,28 @@
 import Lottie
 import SwiftUI
 
-/// Appi, drawn from the splash Lottie. Plays the intro once, then rests on the
-/// final frame so every welcome screen shares the same character.
+/// Appi, drawn from `appi.json` (built by `ios/AnimationSources/build_appi.py`).
+/// Plays the splash intro once, then idles and beams on request so every
+/// welcome screen shares the same living character.
 struct AppiView: View {
     let playsIntro: Bool
     var onIntroFinished: () -> Void = {}
 
     @Environment(AppiController.self) private var appi
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var clip: Clip
     @State private var isRisen: Bool
-    @State private var isBreathing = false
 
-    private static let animation = LottieAnimation.named("appi-splash")
+    private static let animation = LottieAnimation.named("appi")
 
-    // Figma export layers that duplicate the real status bar and the screen gradient.
-    private static let hiddenLayers = ["Splash Screen", "Levels", "Time"]
+    private enum Clip: String {
+        case intro, settle, idle, beam
+    }
 
     init(playsIntro: Bool, onIntroFinished: @escaping () -> Void = {}) {
         self.playsIntro = playsIntro
         self.onIntroFinished = onIntroFinished
+        _clip = State(initialValue: playsIntro ? .intro : .idle)
         _isRisen = State(initialValue: playsIntro)
     }
 
@@ -36,10 +39,8 @@ struct AppiView: View {
                 Color.clear
                     .frame(width: 320 * scale, height: appiHeight)
                     .contentShape(.rect)
-                    .onTapGesture { appi.hop() }
+                    .onTapGesture { appi.beam() }
             }
-            .scaleEffect(y: isBreathing ? 1.012 : 1, anchor: .bottom)
-            .animation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true), value: isBreathing)
             .keyframeAnimator(initialValue: Squash(), trigger: reduceMotion ? 0 : appi.hops) { content, squash in
                 content.scaleEffect(x: squash.x, y: squash.y, anchor: .bottom)
             } keyframes: { _ in
@@ -54,7 +55,7 @@ struct AppiView: View {
                     SpringKeyframe(1, duration: 0.5, spring: .bouncy)
                 }
             }
-            .keyframeAnimator(initialValue: 0, trigger: reduceMotion ? 0 : appi.shakes) { content, x in
+            .keyframeAnimator(initialValue: CGFloat(0), trigger: reduceMotion ? 0 : appi.shakes) { content, x in
                 content.offset(x: x)
             } keyframes: { _ in
                 KeyframeTrack {
@@ -73,35 +74,34 @@ struct AppiView: View {
         .ignoresSafeArea()
         .accessibilityHidden(true)
         .sensoryFeedback(.impact(flexibility: .soft), trigger: appi.hops)
+        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.6), trigger: appi.beams)
         .sensoryFeedback(.error, trigger: appi.shakes)
+        .onChange(of: appi.beams) {
+            if clip == .idle { clip = .beam }
+        }
         .task {
-            if !isRisen {
-                try? await Task.sleep(for: .milliseconds(150))
-                isRisen = true
-            }
-            if playsIntro {
-                try? await Task.sleep(for: .seconds(3.5))
-            }
-            if !reduceMotion {
-                isBreathing = true
-            }
+            guard !isRisen else { return }
+            try? await Task.sleep(for: .milliseconds(150))
+            isRisen = true
         }
     }
 
     private var character: some View {
-        Self.hiddenLayers.reduce(
-            LottieView(animation: Self.animation)
-                .resizable()
-                .playbackMode(playsIntro
-                    ? .playing(.fromProgress(0, toProgress: 1, loopMode: .playOnce))
-                    : .paused(at: .progress(1)))
-                .animationDidFinish { _ in onIntroFinished() }
-        ) { view, layer in
-            view.valueProvider(
-                FloatValueProvider(0),
-                for: AnimationKeypath(keypath: "\(layer).Transform.Opacity")
-            )
-        }
+        LottieView(animation: Self.animation)
+            .resizable()
+            .playbackMode(.playing(.marker(clip.rawValue, loopMode: clip == .idle ? .loop : .playOnce)))
+            .animationDidFinish { completed in
+                guard completed else { return }
+                switch clip {
+                case .intro:
+                    clip = .settle
+                    onIntroFinished()
+                case .settle, .beam:
+                    clip = .idle
+                case .idle:
+                    break
+                }
+            }
     }
 }
 

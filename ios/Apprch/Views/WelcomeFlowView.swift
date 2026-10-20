@@ -57,7 +57,7 @@ struct WelcomeFlowView: View {
     }
 
     private func finishOnboarding() {
-        appi.hop()
+        appi.beam()
         withAnimation(.smooth(duration: 0.55)) {
             finishedOnboarding = true
         }
@@ -92,9 +92,13 @@ struct WelcomeBackground: View {
 @Observable
 final class AppiController {
     private(set) var hops = 0
+    private(set) var beams = 0
     private(set) var shakes = 0
     var isTucked = false
 
     func hop() { hops += 1 }
     func shake() { shakes += 1 }
+
+    /// Sends out a small NFC ping, like Appi tapping a tag.
+    func beam() { beams += 1 }
 }

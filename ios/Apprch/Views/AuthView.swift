@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Sign in and create account. Lives on the welcome stage, so Appi reacts:
-/// he ducks while you type, hops on success, and shakes his head on errors.
+/// he ducks while you type, beams on success, and shakes his head on errors.
 struct AuthView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(AppiController.self) private var appi
@@ -186,7 +186,7 @@ struct AuthView: View {
                 } else {
                     try await authVM.signIn(email: email, password: password)
                 }
-                appi.hop()
+                appi.beam()
             } catch {
                 withAnimation(.snappy) {
                     errorMessage = AuthUserFacing.message(for: error)

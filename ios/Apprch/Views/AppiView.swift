@@ -2,7 +2,7 @@ import Lottie
 import SwiftUI
 
 /// Appi, drawn from `appi.json` (built by `ios/AnimationSources/build_appi.py`).
-/// Plays the splash intro once, then idles and beams on request so every
+/// Plays the splash intro once, then idles and cheers on request so every
 /// welcome screen shares the same living character.
 struct AppiView: View {
     let playsIntro: Bool
@@ -16,7 +16,7 @@ struct AppiView: View {
     private static let animation = LottieAnimation.named("appi")
 
     private enum Clip: String {
-        case intro, settle, idle, beam
+        case intro, settle, idle, cheer
     }
 
     init(playsIntro: Bool, onIntroFinished: @escaping () -> Void = {}) {
@@ -39,7 +39,7 @@ struct AppiView: View {
                 Color.clear
                     .frame(width: 320 * scale, height: appiHeight)
                     .contentShape(.rect)
-                    .onTapGesture { appi.beam() }
+                    .onTapGesture { appi.hop() }
             }
             .keyframeAnimator(initialValue: Squash(), trigger: reduceMotion ? 0 : appi.hops) { content, squash in
                 content.scaleEffect(x: squash.x, y: squash.y, anchor: .bottom)
@@ -74,10 +74,10 @@ struct AppiView: View {
         .ignoresSafeArea()
         .accessibilityHidden(true)
         .sensoryFeedback(.impact(flexibility: .soft), trigger: appi.hops)
-        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.6), trigger: appi.beams)
+        .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.6), trigger: appi.cheers)
         .sensoryFeedback(.error, trigger: appi.shakes)
-        .onChange(of: appi.beams) {
-            if clip == .idle { clip = .beam }
+        .onChange(of: appi.cheers) {
+            if clip == .idle { clip = .cheer }
         }
         .task {
             guard !isRisen else { return }
@@ -96,7 +96,7 @@ struct AppiView: View {
                 case .intro:
                     clip = .settle
                     onIntroFinished()
-                case .settle, .beam:
+                case .settle, .cheer:
                     clip = .idle
                 case .idle:
                     break

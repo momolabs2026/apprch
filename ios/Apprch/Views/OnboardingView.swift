@@ -75,7 +75,7 @@ struct OnboardingView: View {
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .onAppear { appeared = true }
-        .onChange(of: current) { appi.beam() }
+        .onChange(of: current) { appi.cheer() }
         .task(id: AutoAdvance(step: current, isPaused: isInteracting || voiceOverEnabled)) {
             guard !isInteracting, !voiceOverEnabled else { return }
             try? await Task.sleep(for: Self.stepDuration)

@@ -92,8 +92,9 @@ struct AppiView: View {
                 }
             }
             .offset(y: isRisen && !appi.isTucked ? 0 : appiHeight + 40)
-            .animation(.spring(duration: 0.55, bounce: 0.3), value: appi.isTucked)
-            .animation(.spring(duration: 0.7, bounce: 0.35), value: isRisen)
+            // No overshoot: rising past rest would show Appi's flat, cut-off bottom edge.
+            .animation(.smooth(duration: 0.5), value: appi.isTucked)
+            .animation(.smooth(duration: 0.6), value: isRisen)
             .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
         }
         .ignoresSafeArea()

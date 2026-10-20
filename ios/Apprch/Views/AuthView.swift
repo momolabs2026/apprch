@@ -1,7 +1,10 @@
 import SwiftUI
 
+/// Sign in and create account. Lives on the welcome stage, so Appi reacts:
+/// he ducks while you type, cheers on success, and shakes his head on errors.
 struct AuthView: View {
     @EnvironmentObject var authVM: AuthViewModel
+    @Environment(AppiController.self) private var appi
 
     @State private var isSignUp = false
     @State private var email = ""
@@ -10,92 +13,187 @@ struct AuthView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showReset = false
+    @State private var appeared = false
+    @FocusState private var focus: Field?
+
+    private enum Field {
+        case name, email, password
+    }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Spacer()
+        GeometryReader { geo in
+            let appiInset = WelcomeLayout.appiHeight * WelcomeLayout.scale(for: geo.size.width) + 24
 
-                VStack(spacing: 8) {
-                    Text("Apprch")
-                        .font(.largeTitle.bold())
-                    Text("Tap once. Everyone knows.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+
+                VStack(spacing: focus == nil ? 64 : 32) {
+                    brand
+                        .opacity(appeared ? 1 : 0)
+                        .offset(y: appeared ? 0 : -16)
+                        .animation(.spring(duration: 0.6, bounce: 0.25), value: appeared)
+
+                    form
+                        .opacity(appeared ? 1 : 0)
+                        .offset(y: appeared ? 0 : 24)
+                        .animation(.spring(duration: 0.6, bounce: 0.25).delay(0.1), value: appeared)
                 }
 
-                Spacer()
-
-                VStack(spacing: 16) {
-                    if isSignUp {
-                        TextField("Your name", text: $displayName)
-                            .textContentType(.name)
-                            .textFieldStyle(.roundedBorder)
-                    }
-
-                    TextField("Email", text: $email)
-                        .textContentType(isSignUp ? .emailAddress : .username)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .textFieldStyle(.roundedBorder)
-
-                    SecureField("Password", text: $password)
-                        .textContentType(isSignUp ? .newPassword : .password)
-                        .textFieldStyle(.roundedBorder)
-
-                    if let msg = errorMessage {
-                        Text(msg)
-                            .foregroundStyle(.red)
-                            .font(.caption)
-                    }
-
-                    Button {
-                        submit()
-                    } label: {
-                        if isLoading {
-                            ProgressView()
-                                .frame(maxWidth: .infinity)
-                        } else {
-                            Text(isSignUp ? "Create account" : "Sign in")
-                                .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isLoading || !formValid)
-
-                    if !isSignUp {
-                        Button("Forgot Password") {
-                            showReset = true
-                        }
-                        .font(.footnote)
-                        .disabled(!AuthEmail.isComplete(email))
-                    }
-                }
-                .padding(.horizontal)
-
-                Button {
-                    withAnimation { isSignUp.toggle() }
-                    errorMessage = nil
-                } label: {
-                    Text(isSignUp ? "Already have an account? Sign in" : "New here? Create account")
-                        .font(.footnote)
-                }
-
-                Spacer()
+                Spacer(minLength: focus == nil ? appiInset : 16)
             }
-            .navigationDestination(isPresented: $showReset) {
+            .frame(width: geo.size.width, height: geo.size.height)
+            .background {
+                Color.clear
+                    .contentShape(.rect)
+                    .onTapGesture { focus = nil }
+                    .allowsHitTesting(focus != nil)
+            }
+        }
+        .ignoresSafeArea(.container, edges: .bottom)
+        .tint(ApprchColor.Tertiary.c200)
+        .animation(.smooth(duration: 0.35), value: focus)
+        .onAppear { appeared = true }
+        .onChange(of: focus) { _, field in
+            appi.isTucked = field != nil
+        }
+        .onDisappear { appi.isTucked = false }
+        .sheet(isPresented: $showReset) {
+            NavigationStack {
                 ResetPasswordView(initialEmail: email)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close", systemImage: "xmark") { showReset = false }
+                        }
+                    }
             }
         }
     }
 
+    private var brand: some View {
+        VStack(spacing: 8) {
+            Text("Apprch")
+                .font(.largeTitle.bold())
+                .foregroundStyle(.white)
+            Text("Tap once. Everyone knows.")
+                .font(.subheadline)
+                .foregroundStyle(ApprchColor.Tertiary.c200)
+        }
+        .multilineTextAlignment(.center)
+    }
+
+    private var form: some View {
+        VStack(spacing: 16) {
+            if isSignUp {
+                WelcomeField(title: "Your name", text: $displayName, isFocused: focus == .name)
+                    .focused($focus, equals: .name)
+                    .textContentType(.name)
+                    .submitLabel(.next)
+                    .onSubmit { focus = .email }
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            WelcomeField(title: "Email", text: $email, isFocused: focus == .email)
+                .focused($focus, equals: .email)
+                .textContentType(isSignUp ? .emailAddress : .username)
+                .keyboardType(.emailAddress)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.next)
+                .onSubmit { focus = .password }
+
+            WelcomeField(title: "Password", text: $password, isSecure: true, isFocused: focus == .password)
+                .focused($focus, equals: .password)
+                .textContentType(isSignUp ? .newPassword : .password)
+                .submitLabel(.go)
+                .onSubmit(submit)
+
+            if let errorMessage {
+                Label(errorMessage, systemImage: "exclamationmark.circle.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
+
+            Button(action: submit) {
+                Text(isSignUp ? "Create account" : "Sign in")
+                    .foregroundStyle(ApprchColor.Neutral.c900)
+                    .opacity(isLoading ? 0 : 1)
+                    .overlay {
+                        if isLoading {
+                            ProgressView().tint(ApprchColor.Neutral.c900)
+                        }
+                    }
+                    .padding(.horizontal, 12)
+            }
+            .font(.subheadline)
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .controlSize(.small)
+
+            footer
+                .padding(.top, 4)
+        }
+        .padding(.horizontal, 24)
+    }
+
+    private var footer: some View {
+        HStack(spacing: 12) {
+            Button(action: toggleMode) {
+                if isSignUp {
+                    Text("Have an account? \(Text("Sign in").fontWeight(.semibold).foregroundStyle(ApprchColor.Tertiary.c200))")
+                        .foregroundStyle(.white.opacity(0.8))
+                } else {
+                    Text("Create account")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(ApprchColor.Tertiary.c200)
+                }
+            }
+
+            if !isSignUp {
+                Circle()
+                    .fill(.white.opacity(0.4))
+                    .frame(width: 3, height: 3)
+                    .transition(.opacity)
+
+                Button("Forgot password?") { showReset = true }
+                    .foregroundStyle(.white.opacity(0.8))
+                    .transition(.opacity)
+            }
+        }
+        .font(.subheadline)
+        .buttonStyle(.plain)
+        .frame(minHeight: 44)
+    }
+
     private var formValid: Bool {
-        !email.isEmpty && password.count >= 6 && (!isSignUp || !displayName.isEmpty)
+        AuthEmail.isComplete(email)
+            && password.count >= 6
+            && (!isSignUp || !displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+    }
+
+    private func toggleMode() {
+        withAnimation(.snappy) {
+            isSignUp.toggle()
+            errorMessage = nil
+        }
+        appi.hop()
     }
 
     private func submit() {
+        guard !isLoading else { return }
+        guard formValid else {
+            withAnimation(.snappy) {
+                errorMessage = isSignUp && displayName.trimmingCharacters(in: .whitespaces).isEmpty
+                    ? "Add your name to create an account."
+                    : "Enter your email and a password with at least 6 characters."
+            }
+            appi.shake()
+            return
+        }
+        focus = nil
         isLoading = true
-        errorMessage = nil
+        withAnimation(.snappy) { errorMessage = nil }
         Task {
             do {
                 if isSignUp {
@@ -103,11 +201,46 @@ struct AuthView: View {
                 } else {
                     try await authVM.signIn(email: email, password: password)
                 }
+                appi.cheer()
             } catch {
-                errorMessage = AuthUserFacing.message(for: error)
+                withAnimation(.snappy) {
+                    errorMessage = AuthUserFacing.message(for: error)
+                }
+                appi.shake()
             }
             isLoading = false
         }
+    }
+}
+
+private struct WelcomeField: View {
+    let title: String
+    @Binding var text: String
+    var isSecure = false
+    let isFocused: Bool
+
+    var body: some View {
+        Group {
+            if isSecure {
+                SecureField(title, text: $text, prompt: prompt)
+            } else {
+                TextField(title, text: $text, prompt: prompt)
+            }
+        }
+        .font(.body.weight(.medium))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 16)
+        .frame(minHeight: 52)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(isFocused ? ApprchColor.Tertiary.c200 : Color.white.opacity(0.24))
+                .frame(height: 1)
+                .animation(.smooth(duration: 0.2), value: isFocused)
+        }
+    }
+
+    private var prompt: Text {
+        Text(title).foregroundStyle(.white)
     }
 }
 

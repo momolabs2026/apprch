@@ -7,13 +7,11 @@ import UserNotifications
 struct ApprchApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var authVM = AuthViewModel()
-    @AppStorage("apprch.appearance") private var appearanceRaw = AppAppearance.system.rawValue
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(authVM)
-                .preferredColorScheme(AppAppearance(rawValue: appearanceRaw)?.colorScheme)
                 .onOpenURL { url in
                     authVM.handleIncomingURL(url)
                 }

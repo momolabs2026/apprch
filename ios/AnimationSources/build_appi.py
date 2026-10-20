@@ -11,6 +11,7 @@ two clips after the splash. Markers name each clip so the app plays them by name
     settle  140–210  the waves tuck back behind Appi
     idle    210–450  looping: Appi glances left and right and blinks
     cheer   450–500  Appi looks up, squinting happily
+    poke    500–540  Appi squeezes his eyes shut and flinches, as if tapped
 
 The NFC waves only appear in the intro; the later clips keep them hidden behind Appi.
 """
@@ -26,6 +27,7 @@ INTRO_END = 140
 SPLASH_END = 210
 IDLE_END = 450
 CHEER_END = 500
+POKE_END = 540
 
 EXPORT_ONLY_LAYERS = {"Levels", "Time", "Splash Screen"}
 
@@ -35,6 +37,7 @@ FACE_REST = [159.30255, 118.319336]
 EYES_OPEN = [100, 100]
 EYES_SHUT = [100, 10]
 EYES_SQUINT = [100, 60]
+EYES_SQUEEZED = [115, 12]
 
 
 def append(prop, keyframes):
@@ -69,6 +72,7 @@ def main():
     look_left = [FACE_REST[0] - 6, FACE_REST[1] - 1.5]
     look_right = [FACE_REST[0] + 6, FACE_REST[1] - 1.5]
     look_up = [FACE_REST[0], FACE_REST[1] - 6]
+    flinch = [FACE_REST[0], FACE_REST[1] + 3]
 
     append(face["ks"]["p"], [
         (SPLASH_END, FACE_REST, EASE),
@@ -82,7 +86,11 @@ def main():
         (460, look_up, EASE),
         (480, look_up, EASE),
         (492, FACE_REST, EASE),
-        (CHEER_END, FACE_REST, EASE),
+        (CHEER_END, FACE_REST, EASE_OUT),
+        (503, flinch, EASE),
+        (528, flinch, EASE),
+        (538, FACE_REST, EASE),
+        (POKE_END, FACE_REST, EASE),
     ])
 
     for eye in eyes:
@@ -99,18 +107,23 @@ def main():
             (460, EYES_SQUINT, EASE),
             (480, EYES_SQUINT, EASE),
             (490, EYES_OPEN, EASE),
-            (CHEER_END, EYES_OPEN, EASE),
+            (CHEER_END, EYES_OPEN, EASE_OUT),
+            (503, EYES_SQUEEZED, EASE),
+            (528, EYES_SQUEEZED, EASE),
+            (536, EYES_OPEN, EASE),
+            (POKE_END, EYES_OPEN, EASE),
         ])
 
     for layer in anim["layers"]:
-        layer["op"] = CHEER_END
-    anim["op"] = CHEER_END
+        layer["op"] = POKE_END
+    anim["op"] = POKE_END
     anim["nm"] = "Appi"
     anim["markers"] = [
         {"tm": 0, "cm": "intro", "dr": INTRO_END},
         {"tm": INTRO_END, "cm": "settle", "dr": SPLASH_END - INTRO_END},
         {"tm": SPLASH_END, "cm": "idle", "dr": IDLE_END - SPLASH_END},
         {"tm": IDLE_END, "cm": "cheer", "dr": CHEER_END - IDLE_END},
+        {"tm": CHEER_END, "cm": "poke", "dr": POKE_END - CHEER_END},
     ]
 
     OUTPUT.write_text(json.dumps(anim, separators=(",", ":")))

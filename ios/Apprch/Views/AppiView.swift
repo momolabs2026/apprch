@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Appi, drawn from `appi.json` (built by `ios/AnimationSources/build_appi.py`).
 /// Plays the splash intro once, then idles and cheers on request so every
-/// welcome screen shares the same living character.
+/// welcome screen shares the same living character. Pressing him makes him
+/// squeeze his eyes shut and squish; letting go makes him wiggle.
 struct AppiView: View {
     let playsIntro: Bool
     var onIntroFinished: () -> Void = {}
@@ -12,11 +13,14 @@ struct AppiView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var clip: Clip
     @State private var isRisen: Bool
+    @State private var pokes = 0
+    @State private var wiggles = 0
+    @GestureState private var isPressed = false
 
     private static let animation = LottieAnimation.named("appi")
 
     private enum Clip: String {
-        case intro, settle, idle, cheer
+        case intro, settle, idle, cheer, poke
     }
 
     init(playsIntro: Bool, onIntroFinished: @escaping () -> Void = {}) {
@@ -39,7 +43,28 @@ struct AppiView: View {
                 Color.clear
                     .frame(width: 320 * scale, height: appiHeight)
                     .contentShape(.rect)
-                    .onTapGesture { appi.hop() }
+                    .gesture(
+                        DragGesture(minimumDistance: 0)
+                            .updating($isPressed) { _, pressed, _ in pressed = true }
+                    )
+            }
+            .scaleEffect(
+                x: isPressed && !reduceMotion ? 1.04 : 1,
+                y: isPressed && !reduceMotion ? 0.93 : 1,
+                anchor: .bottom
+            )
+            .animation(.spring(duration: 0.3, bounce: 0.55), value: isPressed)
+            .keyframeAnimator(initialValue: CGFloat(0), trigger: reduceMotion ? 0 : wiggles) { content, x in
+                content.offset(x: x)
+            } keyframes: { _ in
+                KeyframeTrack {
+                    CubicKeyframe(6, duration: 0.045)
+                    CubicKeyframe(-6, duration: 0.06)
+                    CubicKeyframe(4, duration: 0.06)
+                    CubicKeyframe(-2.5, duration: 0.06)
+                    CubicKeyframe(1, duration: 0.05)
+                    CubicKeyframe(0, duration: 0.05)
+                }
             }
             .keyframeAnimator(initialValue: Squash(), trigger: reduceMotion ? 0 : appi.hops) { content, squash in
                 content.scaleEffect(x: squash.x, y: squash.y, anchor: .bottom)
@@ -76,8 +101,17 @@ struct AppiView: View {
         .sensoryFeedback(.impact(flexibility: .soft), trigger: appi.hops)
         .sensoryFeedback(.impact(flexibility: .soft, intensity: 0.6), trigger: appi.cheers)
         .sensoryFeedback(.error, trigger: appi.shakes)
+        .sensoryFeedback(.impact(weight: .light), trigger: pokes)
         .onChange(of: appi.cheers) {
             if clip == .idle { clip = .cheer }
+        }
+        .onChange(of: isPressed) { _, pressed in
+            if pressed {
+                pokes += 1
+                if clip == .idle || clip == .cheer { clip = .poke }
+            } else {
+                wiggles += 1
+            }
         }
         .task {
             guard !isRisen else { return }
@@ -96,7 +130,7 @@ struct AppiView: View {
                 case .intro:
                     clip = .settle
                     onIntroFinished()
-                case .settle, .cheer:
+                case .settle, .cheer, .poke:
                     clip = .idle
                 case .idle:
                     break

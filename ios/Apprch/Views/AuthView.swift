@@ -42,8 +42,12 @@ struct AuthView: View {
                 Spacer(minLength: focus == nil ? appiInset : 16)
             }
             .frame(width: geo.size.width, height: geo.size.height)
-            .contentShape(.rect)
-            .onTapGesture { focus = nil }
+            .background {
+                Color.clear
+                    .contentShape(.rect)
+                    .onTapGesture { focus = nil }
+                    .allowsHitTesting(focus != nil)
+            }
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .tint(ApprchColor.Tertiary.c200)
@@ -127,28 +131,39 @@ struct AuthView: View {
             .buttonBorderShape(.capsule)
             .controlSize(.small)
 
+            footer
+                .padding(.top, 4)
+        }
+        .padding(.horizontal, 24)
+    }
+
+    private var footer: some View {
+        HStack(spacing: 12) {
             Button(action: toggleMode) {
-                Group {
-                    if isSignUp {
-                        Text("Already have an account? \(Text("Sign in").underline())")
-                    } else {
-                        Text("New here? \(Text("Create account").underline())")
-                    }
+                if isSignUp {
+                    Text("Have an account? \(Text("Sign in").fontWeight(.semibold).foregroundStyle(ApprchColor.Tertiary.c200))")
+                        .foregroundStyle(.white.opacity(0.8))
+                } else {
+                    Text("Create account")
+                        .fontWeight(.semibold)
+                        .foregroundStyle(ApprchColor.Tertiary.c200)
                 }
-                .font(.footnote)
-                .foregroundStyle(ApprchColor.Tertiary.c200)
             }
-            .buttonStyle(.plain)
 
             if !isSignUp {
+                Circle()
+                    .fill(.white.opacity(0.4))
+                    .frame(width: 3, height: 3)
+                    .transition(.opacity)
+
                 Button("Forgot password?") { showReset = true }
-                    .font(.footnote)
                     .foregroundStyle(.white.opacity(0.8))
-                    .buttonStyle(.plain)
                     .transition(.opacity)
             }
         }
-        .padding(.horizontal, 24)
+        .font(.subheadline)
+        .buttonStyle(.plain)
+        .frame(minHeight: 44)
     }
 
     private var formValid: Bool {

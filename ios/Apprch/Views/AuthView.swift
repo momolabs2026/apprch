@@ -1,20 +1,24 @@
 import SwiftUI
 
-/// Sign in and create account. Lives on the welcome stage, so Appi reacts:
-/// he ducks while you type, cheers on success, and shakes his head on errors.
+/// Sign in, create account, and password reset. Lives on the welcome stage, so Appi
+/// reacts: he ducks while you type, cheers on success, and shakes his head on errors.
 struct AuthView: View {
     @EnvironmentObject var authVM: AuthViewModel
     @Environment(AppiController.self) private var appi
 
-    @State private var isSignUp = false
+    @State private var mode = Mode.signIn
     @State private var email = ""
     @State private var password = ""
     @State private var displayName = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var showReset = false
+    @State private var resetSent = false
     @State private var appeared = false
     @FocusState private var focus: Field?
+
+    private enum Mode {
+        case signIn, signUp, reset
+    }
 
     private enum Field {
         case name, email, password
@@ -57,16 +61,7 @@ struct AuthView: View {
             appi.isTucked = field != nil
         }
         .onDisappear { appi.isTucked = false }
-        .sheet(isPresented: $showReset) {
-            NavigationStack {
-                ResetPasswordView(initialEmail: email)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Close", systemImage: "xmark") { showReset = false }
-                        }
-                    }
-            }
-        }
+        .onChange(of: email) { resetSent = false }
     }
 
     private var brand: some View {
@@ -83,7 +78,18 @@ struct AuthView: View {
 
     private var form: some View {
         VStack(spacing: 16) {
-            if isSignUp {
+            if mode == .reset {
+                Text(resetSent
+                    ? "Check your inbox for a reset link."
+                    : "Enter your account email and we’ll send you a reset link.")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                    .contentTransition(.opacity)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
+            if mode == .signUp {
                 WelcomeField(title: "Your name", text: $displayName, isFocused: focus == .name)
                     .focused($focus, equals: .name)
                     .textContentType(.name)
@@ -94,18 +100,23 @@ struct AuthView: View {
 
             WelcomeField(title: "Email", text: $email, isFocused: focus == .email)
                 .focused($focus, equals: .email)
-                .textContentType(isSignUp ? .emailAddress : .username)
+                .textContentType(mode == .signUp ? .emailAddress : .username)
                 .keyboardType(.emailAddress)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .submitLabel(.next)
-                .onSubmit { focus = .password }
+                .submitLabel(mode == .reset ? .send : .next)
+                .onSubmit {
+                    if mode == .reset { submit() } else { focus = .password }
+                }
 
-            WelcomeField(title: "Password", text: $password, isSecure: true, isFocused: focus == .password)
-                .focused($focus, equals: .password)
-                .textContentType(isSignUp ? .newPassword : .password)
-                .submitLabel(.go)
-                .onSubmit(submit)
+            if mode != .reset {
+                WelcomeField(title: "Password", text: $password, isSecure: true, isFocused: focus == .password)
+                    .focused($focus, equals: .password)
+                    .textContentType(mode == .signUp ? .newPassword : .password)
+                    .submitLabel(.go)
+                    .onSubmit(submit)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
 
             if let errorMessage {
                 Label(errorMessage, systemImage: "exclamationmark.circle.fill")
@@ -116,7 +127,8 @@ struct AuthView: View {
             }
 
             Button(action: submit) {
-                Text(isSignUp ? "Create account" : "Sign in")
+                Text(submitTitle)
+                    .contentTransition(.opacity)
                     .foregroundStyle(ApprchColor.Neutral.c900)
                     .opacity(isLoading ? 0 : 1)
                     .overlay {
@@ -139,26 +151,32 @@ struct AuthView: View {
 
     private var footer: some View {
         HStack(spacing: 12) {
-            Button(action: toggleMode) {
-                if isSignUp {
-                    Text("Have an account? \(Text("Sign in").fontWeight(.semibold).foregroundStyle(ApprchColor.Tertiary.c200))")
-                        .foregroundStyle(.white.opacity(0.8))
-                } else {
+            switch mode {
+            case .signIn:
+                Button { switchMode(to: .signUp) } label: {
                     Text("Create account")
                         .fontWeight(.semibold)
                         .foregroundStyle(ApprchColor.Tertiary.c200)
                 }
-            }
 
-            if !isSignUp {
                 Circle()
                     .fill(.white.opacity(0.4))
                     .frame(width: 3, height: 3)
                     .transition(.opacity)
 
-                Button("Forgot password?") { showReset = true }
+                Button("Forgot password?") { switchMode(to: .reset) }
                     .foregroundStyle(.white.opacity(0.8))
                     .transition(.opacity)
+            case .signUp:
+                Button { switchMode(to: .signIn) } label: {
+                    Text("Have an account? \(Text("Sign in").fontWeight(.semibold).foregroundStyle(ApprchColor.Tertiary.c200))")
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+            case .reset:
+                Button { switchMode(to: .signIn) } label: {
+                    Text("Remembered it? \(Text("Sign in").fontWeight(.semibold).foregroundStyle(ApprchColor.Tertiary.c200))")
+                        .foregroundStyle(.white.opacity(0.8))
+                }
             }
         }
         .font(.subheadline)
@@ -166,16 +184,35 @@ struct AuthView: View {
         .frame(minHeight: 44)
     }
 
-    private var formValid: Bool {
-        AuthEmail.isComplete(email)
-            && password.count >= 6
-            && (!isSignUp || !displayName.trimmingCharacters(in: .whitespaces).isEmpty)
+    private var submitTitle: String {
+        switch mode {
+        case .signIn: return "Sign in"
+        case .signUp: return "Create account"
+        case .reset: return resetSent ? "Send again" : "Send reset link"
+        }
     }
 
-    private func toggleMode() {
+    private var missingName: Bool {
+        mode == .signUp && displayName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    private var formValid: Bool {
+        AuthEmail.isComplete(email)
+            && (mode == .reset || password.count >= 6)
+            && !missingName
+    }
+
+    private var invalidFormMessage: String {
+        if mode == .reset { return "Enter the email on your account." }
+        if missingName { return "Add your name to create an account." }
+        return "Enter your email and a password with at least 6 characters."
+    }
+
+    private func switchMode(to newMode: Mode) {
         withAnimation(.snappy) {
-            isSignUp.toggle()
+            mode = newMode
             errorMessage = nil
+            resetSent = false
         }
         appi.hop()
     }
@@ -184,9 +221,7 @@ struct AuthView: View {
         guard !isLoading else { return }
         guard formValid else {
             withAnimation(.snappy) {
-                errorMessage = isSignUp && displayName.trimmingCharacters(in: .whitespaces).isEmpty
-                    ? "Add your name to create an account."
-                    : "Enter your email and a password with at least 6 characters."
+                errorMessage = invalidFormMessage
             }
             appi.shake()
             return
@@ -196,10 +231,14 @@ struct AuthView: View {
         withAnimation(.snappy) { errorMessage = nil }
         Task {
             do {
-                if isSignUp {
-                    try await authVM.signUp(email: email, password: password, displayName: displayName)
-                } else {
+                switch mode {
+                case .signIn:
                     try await authVM.signIn(email: email, password: password)
+                case .signUp:
+                    try await authVM.signUp(email: email, password: password, displayName: displayName)
+                case .reset:
+                    try await authVM.sendPasswordReset(email: email)
+                    withAnimation(.snappy) { resetSent = true }
                 }
                 appi.cheer()
             } catch {
@@ -241,82 +280,6 @@ private struct WelcomeField: View {
 
     private var prompt: Text {
         Text(title).foregroundStyle(.white)
-    }
-}
-
-struct ResetPasswordView: View {
-    @EnvironmentObject var authVM: AuthViewModel
-
-    @State private var email: String
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    @State private var resetSent = false
-
-    init(initialEmail: String) {
-        _email = State(initialValue: initialEmail)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Provide the email on your account. We’ll send a reset link there.")
-                .foregroundStyle(.secondary)
-
-            TextField("Email", text: $email)
-                .textContentType(.emailAddress)
-                .keyboardType(.emailAddress)
-                .textInputAutocapitalization(.never)
-                .textFieldStyle(.roundedBorder)
-                .onChange(of: email) { _, _ in
-                    resetSent = false
-                    errorMessage = nil
-                }
-
-            if let errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .font(.caption)
-            }
-
-            Button {
-                sendReset()
-            } label: {
-                if isLoading {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                } else {
-                    Text("Reset password")
-                        .frame(maxWidth: .infinity)
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading || !AuthEmail.isComplete(email))
-
-            if resetSent {
-                Text("Check your email for a reset link.")
-                    .font(.subheadline)
-                    .foregroundStyle(.green)
-            }
-
-            Spacer()
-        }
-        .padding()
-        .navigationTitle("Reset password")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private func sendReset() {
-        isLoading = true
-        errorMessage = nil
-        resetSent = false
-        Task {
-            do {
-                try await authVM.sendPasswordReset(email: email)
-                resetSent = true
-            } catch {
-                errorMessage = AuthUserFacing.message(for: error)
-            }
-            isLoading = false
-        }
     }
 }
 
